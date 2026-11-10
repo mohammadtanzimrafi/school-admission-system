@@ -1,0 +1,19 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment & editors
+.env
+.env.local
+.idea/
+.vscode/
+.DS_Store
