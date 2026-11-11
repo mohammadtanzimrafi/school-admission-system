@@ -36,3 +36,8 @@ export interface CreateClassInput {
   name: string
   totalSeats: number
 }
+
+/** Public backend settings. Mirrors GET /settings. */
+export interface Settings {
+  holdDurationSeconds: number
+}

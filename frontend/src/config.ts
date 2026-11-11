@@ -25,7 +25,13 @@ export const API_BASE_URL = resolveApiBaseUrl()
 
 /** How often live data is re-fetched, in milliseconds. */
 export const REFRESH_INTERVAL = {
-  classes: 3_000,
+  classes: 5_000,
   hold: 4_000,
   myHolds: 5_000,
 } as const
+
+/** Admissions taken now are for the next school year. */
+export const ACADEMIC_YEAR = new Date().getFullYear() + 1
+
+/** What the backend uses when HOLD_DURATION_SECONDS is not set; shown until /settings answers. */
+export const DEFAULT_HOLD_SECONDS = 600

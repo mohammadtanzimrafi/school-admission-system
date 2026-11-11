@@ -4,13 +4,58 @@ import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
 import { Button } from './Button'
 
-/** "Nothing here yet" with an optional next step, instead of an empty screen. */
+/** Breadcrumb, serif headline and intro line that open every page. */
+export function PageHeader({ crumbs, title, subtitle, aside }: { crumbs: string[]; title: string; subtitle?: string; aside?: ReactNode }) {
+  return (
+    <header className="mb-8 flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+      <div className="min-w-0">
+        <p className="text-[13px] font-semibold text-muted">{crumbs.join('  /  ')}</p>
+        <h1 className="mt-1.5 font-serif text-[28px] leading-[1.55] font-medium text-ink sm:text-[32px]">{title}</h1>
+        {subtitle && <p className="mt-0.5 max-w-3xl text-base text-muted">{subtitle}</p>}
+      </div>
+      {aside && <div className="shrink-0 sm:pt-7">{aside}</div>}
+    </header>
+  )
+}
+
+/** Section heading with a short line under it. */
+export function SectionHeader({ title, subtitle, aside }: { title: string; subtitle?: string; aside?: ReactNode }) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 className="text-[22px] leading-[1.5] font-semibold text-ink">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-[15px] text-muted">{subtitle}</p>}
+      </div>
+      {aside}
+    </div>
+  )
+}
+
+const noticeTones = {
+  amber: 'bg-amber-wash text-amber-ink',
+  green: 'bg-brand-tint text-brand',
+  stone: 'bg-stone-wash text-muted',
+  rose: 'bg-clay-tint text-clay-ink',
+  sage: 'bg-sage-200 text-brand',
+}
+
+/** A full-width coloured strip with one message. */
+export function NoticeBar({ tone, icon, children, className }: { tone: keyof typeof noticeTones; icon?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <div role="status" className={cn('flex items-start gap-3 rounded-[9px] px-5 py-4 text-[15px] font-medium', noticeTones[tone], className)}>
+      {icon && <span className="shrink-0 text-xl leading-6" aria-hidden>{icon}</span>}
+      <div className="min-w-0 leading-6">{children}</div>
+    </div>
+  )
+}
+
+/** "Nothing here yet" with a next step, instead of an empty screen. */
 export function EmptyState({ icon, title, body, action }: { icon: ReactNode; title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-12 text-center">
-      <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-teal-50 text-teal-700">{icon}</div>
-      <h2 className="mt-4 text-lg font-bold text-stone-900">{title}</h2>
-      <p className="mx-auto mt-1 max-w-md text-stone-600">{body}</p>
+    <div className="rounded-[14px] border border-dashed border-line bg-white px-6 py-14 text-center">
+      <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-sage-200 text-brand">{icon}</div>
+      <h2 className="mt-4 text-lg font-semibold text-ink">{title}</h2>
+      <p className="mx-auto mt-1 max-w-md text-muted">{body}</p>
       {action && <div className="mt-6 flex justify-center">{action}</div>}
     </div>
   )
@@ -21,15 +66,15 @@ export function ErrorState({ title, error, onRetry, retrying }: { title: string;
   const { t, describeError } = useI18n()
 
   return (
-    <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-10 text-center">
-      <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+    <div role="alert" className="rounded-[14px] border border-clay-tint bg-white px-6 py-12 text-center">
+      <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-clay-tint text-clay-ink">
         <CircleAlert className="size-7" aria-hidden />
       </div>
-      <h2 className="mt-4 text-lg font-bold text-rose-900">{title}</h2>
-      <p className="mx-auto mt-1 max-w-md text-rose-800">{describeError(error)}</p>
+      <h2 className="mt-4 text-lg font-semibold text-ink">{title}</h2>
+      <p className="mx-auto mt-1 max-w-md text-muted">{describeError(error)}</p>
       {onRetry && (
         <div className="mt-6 flex justify-center">
-          <Button variant="secondary" onClick={onRetry} loading={retrying} icon={<RefreshCw className="size-4" aria-hidden />}>
+          <Button variant="soft" onClick={onRetry} loading={retrying} icon={<RefreshCw className="size-4" aria-hidden />}>
             {t('common.retry')}
           </Button>
         </div>
@@ -38,38 +83,12 @@ export function ErrorState({ title, error, onRetry, retrying }: { title: string;
   )
 }
 
-/** A short inline note: information, a warning, or an error next to the thing it is about. */
-export function Notice({ tone, icon, children, className }: { tone: 'info' | 'warning' | 'error'; icon?: ReactNode; children: ReactNode; className?: string }) {
-  const tones = {
-    info: 'border-sky-200 bg-sky-50 text-sky-900',
-    warning: 'border-amber-300 bg-amber-50 text-amber-900',
-    error: 'border-rose-200 bg-rose-50 text-rose-800',
-  }
-
-  return (
-    <div
-      role={tone === 'error' ? 'alert' : 'status'}
-      className={cn('flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm', tones[tone], className)}
-    >
-      {icon && <span className="mt-0.5 shrink-0">{icon}</span>}
-      <div>{children}</div>
-    </div>
-  )
-}
-
-/** Grey placeholder shown while content loads, so the layout does not jump. */
+/** Placeholder shown while content loads, so the layout does not jump. */
 export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn('animate-pulse rounded-lg bg-stone-200', className)} />
+  return <div aria-hidden className={cn('animate-pulse rounded-xl bg-sage-200', className)} />
 }
 
-export function PageHeader({ title, subtitle, aside }: { title: string; subtitle?: string; aside?: ReactNode }) {
-  return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-stone-900 sm:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 max-w-2xl text-stone-600">{subtitle}</p>}
-      </div>
-      {aside}
-    </div>
-  )
+/** Text with `\n` line breaks from the message catalogue. */
+export function Lines({ text, className }: { text: string; className?: string }) {
+  return <span className={cn('whitespace-pre-line', className)}>{text}</span>
 }

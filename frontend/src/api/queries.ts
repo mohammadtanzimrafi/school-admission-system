@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { REFRESH_INTERVAL } from '../config'
+import { useCallback } from 'react'
+import { DEFAULT_HOLD_SECONDS, REFRESH_INTERVAL } from '../config'
 import { admissionApi } from './admission'
 import { ApiError } from './http'
 import type { CreateClassInput, Hold, HoldStatus } from './types'
@@ -10,11 +11,12 @@ export const queryKeys = {
   classes: ['classes'] as const,
   hold: (holdId: string) => ['holds', holdId] as const,
   myHolds: (studentId: string) => [MY_HOLDS, studentId] as const,
+  settings: ['settings'] as const,
 }
 
-/** Seat numbers and application lists all change when any application changes. */
+/** Seat numbers and application lists all change when any application changes; settings do not. */
 function refreshEverything(queryClient: QueryClient): Promise<void> {
-  return queryClient.invalidateQueries()
+  return queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== queryKeys.settings[0] })
 }
 
 /** All classes with seat numbers, re-fetched every few seconds while the tab is visible. */
@@ -26,12 +28,19 @@ export function useClasses() {
   })
 }
 
-/** One application. Polls while it can still change (HELD), then stops. */
-export function useHold(holdId: string) {
+/** Re-fetches every server value on screen, e.g. the moment a countdown reaches zero. */
+export function useRefreshAll(): () => Promise<void> {
+  const queryClient = useQueryClient()
+  return useCallback(() => refreshEverything(queryClient), [queryClient])
+}
+
+/** One application. Polls while it can still change (HELD), then stops. Idle without an id. */
+export function useHold(holdId: string | undefined) {
   const queryClient = useQueryClient()
   return useQuery({
-    queryKey: queryKeys.hold(holdId),
-    queryFn: ({ signal }) => admissionApi.getHold(holdId, signal),
+    queryKey: queryKeys.hold(holdId ?? ''),
+    queryFn: ({ signal }) => admissionApi.getHold(holdId!, signal),
+    enabled: Boolean(holdId),
     // Arriving from "my applications", the list already holds this application: show it
     // at once (and keep showing it if the server is briefly unreachable), then refresh.
     initialData: () =>
@@ -55,6 +64,16 @@ export function useMyHolds(studentId: string | null) {
     enabled: studentId !== null,
     refetchInterval: REFRESH_INTERVAL.myHolds,
   })
+}
+
+/** How long a seat stays held, from the backend; the default until it answers. Fetched once. */
+export function useHoldSeconds(): number {
+  const { data } = useQuery({
+    queryKey: queryKeys.settings,
+    queryFn: ({ signal }) => admissionApi.getSettings(signal),
+    staleTime: Infinity,
+  })
+  return data?.holdDurationSeconds ?? DEFAULT_HOLD_SECONDS
 }
 
 export function useCreateClass() {

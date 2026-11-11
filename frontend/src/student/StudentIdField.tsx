@@ -1,18 +1,16 @@
-import { IdCard, Pencil } from 'lucide-react'
 import { useEffect, useId, useState, type FormEvent } from 'react'
-import { Button } from '../components/Button'
 import { useToast } from '../components/Toasts'
 import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
 import { useStudent } from './StudentProvider'
-import { checkStudentId, formatStudentId, normalizeStudentId, STUDENT_ID_LENGTH } from './studentId'
+import { checkStudentId, normalizeStudentId, STUDENT_ID_LENGTH } from './studentId'
 
 /**
- * The box at the top of every page where the student's birth registration number is
- * entered. Once saved it shrinks to a one-line summary with a "change" button.
+ * The birth registration number box in the top bar. It is the only identity the app has:
+ * once saved it reads as a value with a "change" link; until then it is an input.
  */
-export function StudentBar() {
-  const { t, formatNumber } = useI18n()
+export function StudentIdField() {
+  const { t, formatDigits, formatNumber } = useI18n()
   const toast = useToast()
   const { studentId, setStudentId, inputRef, askCount } = useStudent()
   const inputId = useId()
@@ -22,6 +20,7 @@ export function StudentBar() {
   const [answeredAsk, setAnsweredAsk] = useState(askCount)
   const [draft, setDraft] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
+  const [focused, setFocused] = useState(false)
 
   // Another screen asked for the number ("enter it before applying") and it has not been dealt with yet.
   const nudged = askCount > answeredAsk
@@ -73,83 +72,77 @@ export function StudentBar() {
 
   if (!editing) {
     return (
-      <section aria-label={t('student.label')} className="border-b border-teal-100 bg-teal-50">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 sm:px-6">
-          <IdCard className="size-5 shrink-0 text-teal-700" aria-hidden />
-          <span className="text-sm text-teal-900">{t('student.current')}:</span>
-          <span className="font-mono text-base font-semibold tracking-wide text-teal-950" data-testid="current-student-id">
-            {formatStudentId(studentId)}
-          </span>
-          <Button variant="ghost" size="sm" onClick={startEditing} icon={<Pencil className="size-3.5" aria-hidden />} className="ml-auto">
-            {t('student.change')}
-          </Button>
+      <div role="group" aria-label={t('student.label')} className="flex h-[58px] items-center gap-3 rounded-[9px] border border-line bg-white pr-4 pl-[13px]">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold text-muted">{t('student.label')}</p>
+          <p data-testid="current-student-id" className="truncate text-base font-medium tracking-wide text-ink-strong tabular">
+            {formatDigits(studentId)}
+          </p>
         </div>
-      </section>
+        <button type="button" onClick={startEditing} className="rounded px-1 text-[13px] font-semibold text-brand hover:underline">
+          {t('student.change')}
+        </button>
+      </div>
     )
   }
 
-  const message = problem ?? (nudged ? t('student.required') : t('student.help'))
+  const message = problem ?? (nudged ? t('student.required') : focused ? t('student.help') : null)
 
   return (
-    <section aria-label={t('student.label')} className={cn('border-b', nudged && !problem ? 'border-amber-300 bg-amber-50' : 'border-teal-100 bg-teal-50')}>
-      <form onSubmit={save} noValidate className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
-        <label htmlFor={inputId} className="flex items-center gap-2 text-sm font-semibold text-teal-950">
-          <IdCard className="size-5 text-teal-700" aria-hidden />
-          {t('student.label')}
-        </label>
-
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
-            <input
-              id={inputId}
-              ref={inputRef}
-              value={draft}
-              onChange={(event) => {
-                setDraft(event.target.value)
-                setProblem(null)
-              }}
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={STUDENT_ID_LENGTH + 6}
-              placeholder={t('student.placeholder')}
-              aria-invalid={problem !== null}
-              aria-describedby={messageId}
-              className={cn(
-                'min-h-11 w-full rounded-xl border bg-white px-4 pr-28 font-mono text-base tracking-wide text-stone-900 placeholder:font-sans placeholder:tracking-normal placeholder:text-stone-400',
-                problem ? 'border-rose-400' : 'border-stone-300',
-              )}
-            />
-            <span
-              aria-hidden
-              className={cn(
-                'pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs tabular-nums',
-                digits.length === STUDENT_ID_LENGTH ? 'font-semibold text-teal-700' : 'text-stone-500',
-              )}
-            >
-              {t('student.digitCount', { count: formatNumber(digits.length) })}
-            </span>
-          </div>
-
-          <div className="flex gap-2">
-            <Button type="submit" className="flex-1 sm:flex-none">
-              {t('student.save')}
-            </Button>
-            {studentId !== null && (
-              <Button variant="secondary" onClick={stopEditing}>
-                {t('student.cancelEdit')}
-              </Button>
-            )}
-          </div>
+    <form onSubmit={save} noValidate className="relative">
+      <div
+        className={cn(
+          'flex h-[58px] items-center gap-2 rounded-[9px] border bg-white pr-2 pl-[13px] focus-within:border-brand',
+          problem ? 'border-clay-ink' : nudged ? 'border-amber-ink' : 'border-line',
+        )}
+      >
+        <div className="min-w-0 flex-1">
+          <label htmlFor={inputId} className="block text-[11px] font-semibold text-muted">
+            {t('student.label')}
+          </label>
+          <input
+            id={inputId}
+            ref={inputRef}
+            value={draft}
+            onChange={(event) => {
+              setDraft(event.target.value)
+              setProblem(null)
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={STUDENT_ID_LENGTH + 6}
+            placeholder={t('student.placeholder')}
+            aria-invalid={problem !== null}
+            aria-describedby={messageId}
+            className="w-full bg-transparent text-base font-medium tracking-wide text-ink-strong outline-none placeholder:text-sm placeholder:font-normal placeholder:tracking-normal placeholder:text-muted/70"
+          />
         </div>
+        <span aria-hidden className={cn('text-xs tabular', digits.length === STUDENT_ID_LENGTH ? 'font-semibold text-brand' : 'text-muted')}>
+          {t('student.digitCount', { count: formatNumber(digits.length) })}
+        </span>
+        <button type="submit" className="h-9 rounded-md bg-brand px-3 text-[13px] font-semibold text-white hover:bg-brand-hover">
+          {t('student.save')}
+        </button>
+        {studentId !== null && (
+          <button type="button" onClick={stopEditing} className="h-9 rounded-md px-2 text-[13px] font-semibold text-muted hover:text-ink">
+            {t('student.cancelEdit')}
+          </button>
+        )}
+      </div>
 
-        <p
-          id={messageId}
-          role={problem ? 'alert' : undefined}
-          className={cn('mt-2 text-sm', problem ? 'font-medium text-rose-700' : nudged ? 'font-medium text-amber-900' : 'text-teal-900/80')}
-        >
-          {message}
-        </p>
-      </form>
-    </section>
+      <p
+        id={messageId}
+        role={problem ? 'alert' : undefined}
+        className={cn(
+          'absolute inset-x-0 top-full z-20 mt-1.5 rounded-lg px-3 py-2 text-[13px] shadow-sm ring-1',
+          problem ? 'bg-clay-tint font-medium text-clay-ink ring-clay-tint' : nudged ? 'bg-amber-wash font-medium text-amber-ink ring-amber-tint' : 'bg-white text-muted ring-line',
+          message === null && 'sr-only',
+        )}
+      >
+        {message ?? t('student.help')}
+      </p>
+    </form>
   )
 }

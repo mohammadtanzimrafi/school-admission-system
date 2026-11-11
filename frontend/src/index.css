@@ -1,8 +1,53 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens from the "অ্যাডমিটলি" Figma file. Components use these names only,
+ * never raw hex values, so the palette can change in one place.
+ */
 @theme {
   --font-sans: "Noto Sans Bengali Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Nirmala UI", sans-serif;
+  --font-serif: "Noto Serif Bengali Variable", "Noto Sans Bengali Variable", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Surfaces */
+  --color-canvas: #f7f8f4;
+  --color-line: #dfe6db;
+  --color-sage-50: #f5f7f1;
+  --color-sage-100: #f0f4ec;
+  --color-sage-200: #eaf0e3;
+  --color-sage-300: #e4eecf;
+
+  /* Text */
+  --color-ink: #193e34;
+  --color-ink-strong: #163c35;
+  --color-muted: #697d71;
+  --color-olive: #48613c;
+
+  /* Brand */
+  --color-brand: #175c48;
+  --color-brand-hover: #124b3b;
+  --color-brand-tint: #e7f1e7;
+  --color-zest: #d8ef8a;
+  --color-zest-soft: #dbeea4;
+  --color-zest-deep: #c4df83;
+  --color-held: #c9d98d;
+
+  /* Sidebar */
+  --color-forest: #123f35;
+  --color-forest-raised: #204d40;
+  --color-forest-line: #31584c;
+  --color-forest-text: #e1ebe5;
+  --color-forest-bright: #eef5e7;
+  --color-forest-muted: #b6cec3;
+  --color-forest-faint: #a4bfb3;
+
+  /* States */
+  --color-amber-wash: #faf0dd;
+  --color-amber-tint: #f8ebcf;
+  --color-amber-ink: #8a5f17;
+  --color-stone-wash: #f1f2ed;
+  --color-clay-tint: #faeee9;
+  --color-clay-ink: #9a442b;
 }
 
 @layer base {
@@ -11,19 +56,24 @@
   }
 
   body {
-    @apply min-h-screen bg-stone-50 text-stone-900 antialiased;
+    @apply min-h-screen bg-canvas text-ink antialiased;
     /* Bangla glyphs sit taller than Latin ones and need more room between lines. */
-    line-height: 1.6;
+    line-height: 1.5;
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-teal-600;
+    @apply outline-2 outline-offset-2 outline-brand;
   }
 
   button:not(:disabled),
-  a {
+  a,
+  select {
     cursor: pointer;
   }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {

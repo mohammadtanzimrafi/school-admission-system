@@ -2,30 +2,35 @@ import { LoaderCircle } from 'lucide-react'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '../lib/cn'
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
-type Size = 'sm' | 'md' | 'lg'
+type Variant = 'primary' | 'soft' | 'quiet' | 'white' | 'danger'
+type Size = 'md' | 'lg'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-teal-700 text-white shadow-sm hover:bg-teal-800 active:bg-teal-900',
-  secondary: 'border border-stone-300 bg-white text-stone-800 hover:bg-stone-100 active:bg-stone-200',
-  danger: 'border border-rose-300 bg-white text-rose-700 hover:bg-rose-50 active:bg-rose-100',
-  ghost: 'text-teal-800 hover:bg-teal-50 active:bg-teal-100',
+  primary: 'bg-brand text-white hover:bg-brand-hover',
+  soft: 'bg-sage-100 text-brand hover:bg-sage-200',
+  quiet: 'bg-sage-100 text-muted hover:bg-sage-200 hover:text-ink',
+  white: 'bg-white text-brand ring-1 ring-line hover:bg-sage-50',
+  danger: 'bg-clay-tint text-clay-ink hover:bg-[#f5e2da]',
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'min-h-9 px-3 text-sm',
-  md: 'min-h-11 px-4 text-sm',
-  lg: 'min-h-13 px-6 text-base',
+  md: 'min-h-11 px-4',
+  lg: 'min-h-12 px-5',
 }
 
 export function buttonClasses(variant: Variant = 'primary', size: Size = 'md', className?: string): string {
   return cn(
-    'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors',
-    'disabled:cursor-not-allowed disabled:opacity-55',
+    'inline-flex items-center justify-center gap-2 rounded-lg text-[15px] font-semibold whitespace-nowrap transition-colors',
+    'disabled:cursor-not-allowed disabled:bg-sage-100 disabled:text-muted/80',
     variants[variant],
     sizes[size],
     className,
   )
+}
+
+/** The "→" the design puts after forward actions. */
+export function Arrow() {
+  return <span aria-hidden>→</span>
 }
 
 interface ButtonProps extends ComponentProps<'button'> {

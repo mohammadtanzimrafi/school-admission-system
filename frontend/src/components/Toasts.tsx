@@ -22,9 +22,9 @@ const ToastContext = createContext<ToastApi | null>(null)
 const LIFETIME_MS: Record<ToastKind, number> = { success: 5_000, info: 5_000, error: 8_000 }
 
 const looks: Record<ToastKind, { classes: string; Icon: typeof Info }> = {
-  success: { classes: 'border-emerald-300 bg-emerald-50 text-emerald-900', Icon: CircleCheck },
-  error: { classes: 'border-rose-300 bg-rose-50 text-rose-900', Icon: CircleAlert },
-  info: { classes: 'border-sky-300 bg-sky-50 text-sky-900', Icon: Info },
+  success: { classes: 'border-brand/20 bg-brand-tint text-brand', Icon: CircleCheck },
+  error: { classes: 'border-clay-ink/20 bg-clay-tint text-clay-ink', Icon: CircleAlert },
+  info: { classes: 'border-line bg-white text-ink', Icon: Info },
 }
 
 /** Short messages that confirm an action or explain why it failed. They never block the page. */

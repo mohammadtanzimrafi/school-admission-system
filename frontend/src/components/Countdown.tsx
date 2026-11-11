@@ -1,51 +1,29 @@
-import { Clock } from 'lucide-react'
-import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
+
+/** "08:42". The design draws timers with Latin digits in both languages. */
+export function formatTimer(milliseconds: number): string {
+  const total = Math.max(0, Math.ceil(milliseconds / 1000))
+  const minutes = String(Math.floor(total / 60)).padStart(2, '0')
+  const seconds = String(total % 60).padStart(2, '0')
+  return `${minutes}:${seconds}`
+}
 
 const URGENT_BELOW_MS = 60_000
 
-/** Compact "mm:ss left" chip for lists and banners. */
-export function CountdownChip({ remainingMs, className }: { remainingMs: number; className?: string }) {
-  const { t, formatDuration } = useI18n()
+/** The large ticking timer. Turns clay-red in the last minute. */
+export function Countdown({ remainingMs, label, className }: { remainingMs: number; label?: string; className?: string }) {
   const urgent = remainingMs < URGENT_BELOW_MS
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums',
-        urgent ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-900',
-        className,
-      )}
-    >
-      <Clock className="size-4" aria-hidden />
-      {t('my.timeLeft', { time: formatDuration(remainingMs) })}
-    </span>
-  )
-}
-
-/** The large timer on the application page. Turns red in the last minute. */
-export function CountdownPanel({ remainingMs, deadline }: { remainingMs: number; deadline: number }) {
-  const { t, formatDuration, formatClock } = useI18n()
-  const urgent = remainingMs < URGENT_BELOW_MS
-
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border px-6 py-5 text-center transition-colors',
-        urgent ? 'border-rose-300 bg-rose-50' : 'border-amber-300 bg-amber-50',
-      )}
-    >
-      <p className={cn('text-sm font-semibold', urgent ? 'text-rose-800' : 'text-amber-900')}>{t('application.timeLeft')}</p>
-      {/* role="timer" is announced on request, not every second, which would be unbearable. */}
+    <div className={className}>
+      {label && <p className="text-xs text-muted">{label}</p>}
+      {/* role="timer" is announced on request, not every second. */}
       <p
         role="timer"
         data-testid="countdown"
-        className={cn('mt-1 text-5xl font-bold tabular-nums tracking-tight sm:text-6xl', urgent ? 'text-rose-700' : 'text-amber-950')}
+        className={cn('text-[36px] leading-[1.45] font-semibold tabular', urgent ? 'text-clay-ink' : 'text-brand')}
       >
-        {formatDuration(remainingMs)}
-      </p>
-      <p className={cn('mt-1 text-sm', urgent ? 'text-rose-800' : 'text-amber-900/80')}>
-        {t('application.expiresAt', { time: formatClock(new Date(deadline)) })}
+        {formatTimer(remainingMs)}
       </p>
     </div>
   )

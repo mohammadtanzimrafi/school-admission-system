@@ -1,0 +1,39 @@
+import { useEffect } from 'react'
+import { effectiveStatus, useMyHolds, useRefreshAll } from '../api/queries'
+import type { Hold, HoldStatus } from '../api/types'
+import { useNow } from '../hooks/useNow'
+import type { MessageKey } from '../i18n/messages'
+import { useStudent } from '../student/StudentProvider'
+
+/**
+ * A hold as it stands this instant. A HELD hold reads EXPIRED the moment its countdown
+ * reaches zero, with no reload, and the server is asked at once so its answer (and the
+ * freed seat) follow without waiting for the next poll.
+ */
+export function useLiveHold(hold: Hold | undefined): { status: HoldStatus | undefined; remainingMs: number; now: number } {
+  const now = useNow(hold?.status === 'HELD')
+  const status = hold ? effectiveStatus(hold, now) : undefined
+  const lapsed = hold?.status === 'HELD' && status === 'EXPIRED'
+  const refreshAll = useRefreshAll()
+
+  useEffect(() => {
+    if (lapsed) void refreshAll()
+  }, [lapsed, refreshAll])
+
+  return { status, remainingMs: hold ? Math.max(0, hold.deadline - now) : 0, now }
+}
+
+/**
+ * Whether the student in the top bar may pay for or cancel this application. Ownership is
+ * known from their own list; until it loads nothing is blocked (the server checks anyway).
+ */
+export function useHoldOwnership(holdId: string | undefined): { studentId: string | null; ownerId: string | null; blocker: MessageKey | null } {
+  const { studentId } = useStudent()
+  const mine = useMyHolds(studentId).data?.some((hold) => hold.holdId === holdId)
+
+  return {
+    studentId,
+    ownerId: mine ? studentId : null,
+    blocker: studentId === null ? 'application.needStudent' : mine === false ? 'application.notOwner' : null,
+  }
+}

@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { ClassSeats, CreateClassInput, Hold, HoldDto } from './types'
+import type { ClassSeats, CreateClassInput, Hold, HoldDto, Settings } from './types'
 
 /** Stamps a hold with its local deadline at the moment the response is received. */
 export function toHold(dto: HoldDto, receivedAt: number = Date.now()): Hold {
@@ -30,6 +30,8 @@ export const admissionApi = {
 
   cancelHold: (holdId: string, studentId: string) =>
     request<void>(`/holds/${encodeURIComponent(holdId)}`, { method: 'DELETE', studentId }),
+
+  getSettings: (signal?: AbortSignal) => request<Settings>('/settings', { signal }),
 
   listMyHolds: async (studentId: string, signal?: AbortSignal) =>
     (await request<HoldDto[]>('/me/holds', { studentId, signal })).map((dto) => toHold(dto)),

@@ -47,4 +47,5 @@ export const api = vi.mocked(admissionApi)
 export function resetApi() {
   api.listClasses.mockResolvedValue([])
   api.listMyHolds.mockResolvedValue([])
+  api.getSettings.mockResolvedValue({ holdDurationSeconds: 600 })
 }
