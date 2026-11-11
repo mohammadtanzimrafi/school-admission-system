@@ -76,7 +76,7 @@ Both suites run in Docker, so nothing else needs to be installed.
 # Backend: 28 integration tests against a real PostgreSQL (uses the compose database server)
 docker compose --profile test run --rm --build backend-tests
 
-# Frontend: 42 unit and screen tests
+# Frontend: 43 unit and screen tests
 docker compose --profile test run --rm --build frontend-tests
 ```
 
@@ -101,7 +101,7 @@ Running them without Docker:
 cd backend
 TEST_DATABASE_CONNECTION="Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres" dotnet test
 
-# Frontend (needs Node 22+)
+# Frontend (needs Node 24, or 22.22+)
 cd frontend
 npm ci
 npm test
@@ -193,9 +193,10 @@ frontend/
 
 ## Local development without Docker
 
-Needs the .NET 10 SDK, Node 22+ and a PostgreSQL server. By default the backend expects
-PostgreSQL on `localhost:5432` with user and password `postgres` and a database named
-`school_admission`; set `ConnectionStrings__Database` to use anything else.
+Needs the .NET 10 SDK, Node 24 (or 22.22+) and a PostgreSQL server. By default the backend
+expects PostgreSQL on `localhost:5432` with user and password `postgres`, and uses a
+database named `school_admission`, which it creates on first start if it does not exist yet.
+Set `ConnectionStrings__Database` to use anything else.
 
 ```bash
 # Backend on http://localhost:8080

@@ -2,8 +2,10 @@
 
 ## Tool
 
-Claude (Anthropic), used as a coding agent in the Claude desktop app. It worked in its own
-Linux sandbox with PostgreSQL 16, the .NET 10 SDK, Node 22 and a headless browser.
+Claude (Anthropic), used as a coding agent in the Claude desktop app. The first pass ran in
+its own Linux sandbox with PostgreSQL 16, the .NET 10 SDK, Node 22 and a headless browser.
+A second pass ran on my Windows machine with the real .NET 10 SDK, PostgreSQL 16.15 and
+Node 24, and checked the whole app against the brief again.
 
 ## Where it was used
 
@@ -23,25 +25,31 @@ brief. The commit history shows the order in which it was built.
 | The "application in progress" banner repeated the countdown twice and also appeared on the screen that already lists the application. | Looking at screenshots. | Text shortened; banner hidden on those screens. |
 | A countdown hook reset its own state inside an effect (flagged by the linter), and each countdown had its own timer. | Lint warning. | Replaced with one shared clock that every countdown reads. |
 | Backend work was first committed as one large commit. | Reviewing `git log`. | Split into logical commits before continuing. |
+| Running the backend against a plain PostgreSQL server crashed on startup (`3D000`, database does not exist). Docker Compose had hidden it, because `POSTGRES_DB` creates the database. | First `dotnet run` on the second machine. | The migrator now creates the database when it is missing. |
+| The "total seats" label sat beside its input instead of above it. | Clicking through the admin screen. | Labels made block-level. |
+| On a 375px phone the nav tabs overflowed and cut off the admin tag. | Phone-size browser check. | Tabs share the width; the tag shows from `sm` upward. |
+| The green "Live" badge kept pulsing while the red banner said the server was unreachable. | Stopping the backend with the class list open. | The badge switches to "Reconnecting"; a test covers it. |
+| The frontend image used `node:22-slim`, but `jsdom` and `react-router` need Node 22.22 or newer, which a floating tag does not promise. | Reading the `engines` field of each dependency. | Pinned to `node:24-slim`, the Node version everything was tested on. |
 
-## What the AI could not check itself
+## What was checked, and what was not
 
-Its sandbox blocks NuGet and Docker registries, so two things were **not** executed there:
+The first sandbox could not reach NuGet, so the backend there ran on a stand-in for the
+Npgsql driver. That gap is closed: on the second machine the 28 backend tests pass using the
+real Npgsql 10 driver and xUnit against PostgreSQL 16.15, including the concurrency tests
+(200 applicants for 10 seats get exactly 10 holds; 300 applicants across two API instances
+cannot oversell 15 seats).
 
-- **the real Npgsql driver and xUnit.** The backend and its 28 tests were run against a real
-  PostgreSQL through a small local stand-in that implements the same standard ADO.NET
-  interfaces (`DbDataSource`, `DbCommand`, ...). The application code only uses those
-  standard interfaces, plus `NpgsqlDataSource.Create`, to keep that gap as small as possible;
-- **`docker compose up`.** The compose file was validated with `docker compose config`, the
-  nginx configuration was run locally against the production build, and the build commands
-  from both Dockerfiles were run from a clean checkout, but no image was built.
+The UI was then used end to end in a browser against that backend and database: creating
+classes (with Bangla digits), invalid input, applying, a 60-second hold expiring on screen
+without a reload, paying, cancelling, "My applications", a refresh, a class filling up, the
+backend being stopped and restarted (data kept), and a phone-size screen. The 43 frontend
+tests, the linter and the production build pass. Every API error case was also called
+directly: none returned a 500.
 
-Everything else was executed: all eight endpoints by hand and by test, 3,000 simultaneous
-applicants across two real backend processes (exactly 120 holds for 120 seats), the 42
-frontend tests, and the UI in a real browser on desktop and phone sizes, including expiry
-without reload, a refresh, reopening the browser, and the server going down and coming back.
-
-These must therefore be run on a machine with Docker before relying on the result:
+**`docker compose up` has not been run by the AI on either machine**, because neither had
+Docker. The compose file was validated with `docker compose config` and the nginx config was
+exercised in the first pass, and every command inside the Dockerfiles has been run by hand,
+but no image was built. Run these on a machine with Docker before relying on the result:
 
 ```bash
 docker compose up --build
