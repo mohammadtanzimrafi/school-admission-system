@@ -99,6 +99,7 @@ function ActiveApplicationBanner() {
   const { studentId } = useStudent()
   const { data: holds } = useMyHolds(studentId)
   const onApplicationPage = useMatch('/applications/:holdId')
+  const onMyApplications = useMatch('/applications')
 
   const pending = (holds ?? []).filter((hold) => hold.status === 'HELD')
   const now = useNow(pending.length > 0)
@@ -106,7 +107,8 @@ function ActiveApplicationBanner() {
     .filter((hold) => effectiveStatus(hold, now) === 'HELD')
     .sort((a, b) => a.deadline - b.deadline)[0]
 
-  if (!next || onApplicationPage?.params.holdId === next.holdId) return null
+  // No need to repeat it on the screens that already show this application.
+  if (!next || onMyApplications || onApplicationPage?.params.holdId === next.holdId) return null
   const remainingMs = next.deadline - now
 
   return (

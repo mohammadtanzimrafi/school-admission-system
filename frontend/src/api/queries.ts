@@ -4,10 +4,12 @@ import { admissionApi } from './admission'
 import { ApiError } from './http'
 import type { CreateClassInput, Hold, HoldStatus } from './types'
 
+const MY_HOLDS = 'my-holds'
+
 export const queryKeys = {
   classes: ['classes'] as const,
   hold: (holdId: string) => ['holds', holdId] as const,
-  myHolds: (studentId: string) => ['my-holds', studentId] as const,
+  myHolds: (studentId: string) => [MY_HOLDS, studentId] as const,
 }
 
 /** Seat numbers and application lists all change when any application changes. */
@@ -26,9 +28,18 @@ export function useClasses() {
 
 /** One application. Polls while it can still change (HELD), then stops. */
 export function useHold(holdId: string) {
+  const queryClient = useQueryClient()
   return useQuery({
     queryKey: queryKeys.hold(holdId),
     queryFn: ({ signal }) => admissionApi.getHold(holdId, signal),
+    // Arriving from "my applications", the list already holds this application: show it
+    // at once (and keep showing it if the server is briefly unreachable), then refresh.
+    initialData: () =>
+      queryClient
+        .getQueriesData<Hold[]>({ queryKey: [MY_HOLDS] })
+        .flatMap(([, holds]) => holds ?? [])
+        .find((hold) => hold.holdId === holdId),
+    initialDataUpdatedAt: 0,
     refetchInterval: (query) => {
       const status = query.state.data?.status
       return status === undefined || status === 'HELD' ? REFRESH_INTERVAL.hold : false
