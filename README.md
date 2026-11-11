@@ -55,8 +55,8 @@ The UI is in Bangla by default; the button in the header switches to English.
 
 ## Configuration
 
-Everything is set through environment variables. With Docker Compose, put them in a `.env`
-file next to `docker-compose.yml` or pass them on the command line, for example
+Everything is set through environment variables. With Docker Compose, copy `.env.example`
+to `.env` and edit it, or pass values on the command line, for example
 `HOLD_DURATION_SECONDS=30 docker compose up`.
 
 | Variable                      | Used by  | Default                 | Meaning |

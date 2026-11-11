@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ---- build: install dependencies and produce the static site -----------------
-FROM node:22-alpine AS build
+# Debian (glibc) rather than Alpine: Vite, Tailwind and the linters ship native
+# binaries, and their glibc builds are the ones exercised most widely.
+FROM node:22-slim AS build
 WORKDIR /app
 
 # Copy the manifests first: `npm ci` stays cached until dependencies change.
