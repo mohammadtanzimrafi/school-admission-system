@@ -11,6 +11,7 @@ import { useToast } from '../components/Toasts'
 import { useNow } from '../hooks/useNow'
 import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
+import { useServerReachable } from '../lib/connection'
 import { useStudent } from '../student/StudentProvider'
 
 const SEARCH_FROM_COUNT = 7
@@ -63,21 +64,8 @@ export function ClassListPage() {
     )
   }
 
-  const header = (
-    <PageHeader
-      title={t('classes.title')}
-      subtitle={t('classes.subtitle')}
-      aside={
-        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-            <span className="relative inline-flex size-2 rounded-full bg-emerald-600" />
-          </span>
-          {t('classes.live')}
-        </span>
-      }
-    />
-  )
+  const header = <PageHeader title={t('classes.title')} subtitle={t('classes.subtitle')} aside={<LiveIndicator />} />
+
 
   if (classes.isPending) {
     return (
@@ -161,6 +149,27 @@ export function ClassListPage() {
         </ul>
       )}
     </>
+  )
+}
+
+/** Says whether the seat numbers on screen are live, or the last known ones while the server is away. */
+function LiveIndicator() {
+  const { t } = useI18n()
+  const live = useServerReachable()
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold',
+        live ? 'bg-emerald-100 text-emerald-900' : 'bg-stone-200 text-stone-700',
+      )}
+    >
+      <span className="relative flex size-2">
+        {live && <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />}
+        <span className={cn('relative inline-flex size-2 rounded-full', live ? 'bg-emerald-600' : 'bg-stone-500')} />
+      </span>
+      {live ? t('classes.live') : t('classes.reconnecting')}
+    </span>
   )
 }
 

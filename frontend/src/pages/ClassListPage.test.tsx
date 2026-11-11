@@ -1,7 +1,8 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/http'
+import { reportServerReachable } from '../lib/connection'
 import { api, hold, renderApp, resetApi, seats, STUDENT } from '../test/renderApp'
 
 vi.mock('../api/admission', async (original) => ({
@@ -107,5 +108,18 @@ describe('ClassListPage', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('The number must be exactly 17 digits. You entered 5.')
     expect(screen.queryByTestId('current-student-id')).not.toBeInTheDocument()
+  })
+
+  it('stops claiming the numbers are live while the server cannot be reached', async () => {
+    api.listClasses.mockResolvedValue([seats()])
+    renderApp('/')
+    expect(await screen.findByText('Live')).toBeInTheDocument()
+
+    act(() => reportServerReachable(false))
+    expect(screen.getByText('Reconnecting')).toBeInTheDocument()
+    expect(screen.queryByText('Live')).not.toBeInTheDocument()
+
+    act(() => reportServerReachable(true))
+    expect(screen.getByText('Live')).toBeInTheDocument()
   })
 })
