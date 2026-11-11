@@ -62,9 +62,13 @@ public static class AdmissionApp
         app.MapClassEndpoints();
         app.MapHoldEndpoints();
         app.MapGet("/health", CheckHealthAsync);
+        app.MapGet("/settings", (AdmissionOptions settings) => Results.Ok(new SettingsResponse(settings.HoldDurationSeconds)));
 
         return app;
     }
+
+    /// <summary>Public settings the UI needs to describe the process, e.g. "your seat is held for 10 minutes".</summary>
+    public sealed record SettingsResponse(int HoldDurationSeconds);
 
     /// <summary>Brings the database schema up to date. Call once before serving requests.</summary>
     public static Task InitialiseDatabaseAsync(this WebApplication app, CancellationToken ct = default) =>

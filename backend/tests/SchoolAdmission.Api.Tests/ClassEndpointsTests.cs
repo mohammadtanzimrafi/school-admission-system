@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using SchoolAdmission.Api.Tests.Infrastructure;
 
 namespace SchoolAdmission.Api.Tests;
@@ -20,6 +21,17 @@ public sealed class ClassEndpointsTests(AdmissionTestHost host) : IClassFixture<
 
         var fetched = await Api.GetClassAsync(created.Id);
         Assert.Equal(new ClassDto(created.Id, "Class 6 - Morning Shift", 120, 0, 0, 120), fetched);
+    }
+
+    [Fact]
+    public async Task Settings_report_the_configured_hold_duration()
+    {
+        var shortHolds = await host.StartApiAsync(holdDurationSeconds: 45);
+
+        var settings = await shortHolds.Http.GetFromJsonAsync<Dictionary<string, int>>("/settings");
+
+        Assert.Equal(45, settings!["holdDurationSeconds"]);
+        await host.StopApiAsync(shortHolds);
     }
 
     [Fact]
