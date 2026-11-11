@@ -1,5 +1,7 @@
 using System.Data.Common;
 using System.Reflection;
+using Npgsql;
+using SchoolAdmission.Api.Configuration;
 
 namespace SchoolAdmission.Api.Data;
 
@@ -7,7 +9,7 @@ namespace SchoolAdmission.Api.Data;
 /// Applies the embedded SQL migrations (Data/Migrations/*.sql) in file-name order and
 /// records each one in schema_migrations, so restarting the app never re-runs a script.
 /// </summary>
-public sealed class DatabaseMigrator(DbDataSource dataSource, ILogger<DatabaseMigrator> logger)
+public sealed class DatabaseMigrator(DbDataSource dataSource, AdmissionOptions options, ILogger<DatabaseMigrator> logger)
 {
     private const string ResourcePrefix = "Migrations/";
 
@@ -17,9 +19,13 @@ public sealed class DatabaseMigrator(DbDataSource dataSource, ILogger<DatabaseMi
     private const int MaxConnectionAttempts = 30;
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(2);
 
-    /// <summary>Waits for PostgreSQL to accept connections, then brings the schema up to date.</summary>
+    /// <summary>
+    /// Waits for PostgreSQL to accept connections, creates the database if it is missing,
+    /// then brings the schema up to date.
+    /// </summary>
     public async Task MigrateAsync(CancellationToken ct = default)
     {
+        var createdDatabase = false;
         for (var attempt = 1; ; attempt++)
         {
             try
@@ -27,12 +33,39 @@ public sealed class DatabaseMigrator(DbDataSource dataSource, ILogger<DatabaseMi
                 await ApplyPendingAsync(ct);
                 return;
             }
+            catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.InvalidCatalogName && !createdDatabase)
+            {
+                // Docker Compose creates the database for us; a bare PostgreSQL server does not.
+                await CreateDatabaseAsync(ct);
+                createdDatabase = true;
+            }
             catch (Exception ex) when (DatabaseErrors.IsUnavailable(ex) && attempt < MaxConnectionAttempts)
             {
                 logger.LogWarning("Database is not reachable yet (attempt {Attempt}/{Max}): {Reason}",
                     attempt, MaxConnectionAttempts, ex.Message);
                 await Task.Delay(RetryDelay, ct);
             }
+        }
+    }
+
+    private async Task CreateDatabaseAsync(CancellationToken ct)
+    {
+        var target = new NpgsqlConnectionStringBuilder(options.ConnectionString);
+        var databaseName = target.Database
+            ?? throw new InvalidOperationException("The connection string does not name a database.");
+
+        // CREATE DATABASE has to run while connected to some other database.
+        var maintenance = new NpgsqlConnectionStringBuilder(options.ConnectionString) { Database = "postgres", Pooling = false };
+        await using var server = NpgsqlDataSource.Create(maintenance.ConnectionString);
+
+        try
+        {
+            logger.LogInformation("Database {Database} does not exist yet; creating it", databaseName);
+            await server.Sql($"CREATE DATABASE \"{databaseName.Replace("\"", "\"\"")}\"").ExecuteAsync(ct);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DuplicateDatabase)
+        {
+            // Another backend process starting at the same time got there first.
         }
     }
 
