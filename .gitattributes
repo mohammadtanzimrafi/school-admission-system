@@ -1,0 +1,5 @@
+# Keep LF line endings everywhere so files copied into Linux containers behave the
+# same no matter which operating system the repository was cloned on.
+* text=auto eol=lf
+*.png binary
+*.woff2 binary
