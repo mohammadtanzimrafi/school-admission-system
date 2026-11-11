@@ -35,18 +35,25 @@ Data lives in a named Docker volume, so `docker compose down` followed by
 
 ## Using the UI
 
-1. **New class** (admin): create a class with a name and a seat count. Create one class per
-   shift, e.g. "Class 6 - Morning Shift" and "Class 6 - Day Shift".
-2. Type the student's 17-digit birth registration number in the box at the top. There is no
-   login; this number identifies the student. It is remembered in the browser.
-3. **Classes**: see total, on-hold, confirmed and available seats for each class (refreshed
-   every 3 seconds) and press **Apply**.
-4. **Application**: shows the status and a countdown. **Pay admission fee** confirms the
-   admission (payment is simulated); **Cancel** releases the seat. When the time runs out
-   the page switches to EXPIRED by itself and the pay button is disabled.
-5. **My applications**: every application of this student with its current status.
+The sidebar has three sections; the switch at the top right jumps between the guardian
+and admin sides.
 
-The UI is in Bangla by default; the button in the header switches to English.
+1. **শ্রেণি ব্যবস্থাপনা / Class management** (admin): seat totals for the whole school, a
+   table of every class, and a form to create one. Put the shift in the name, e.g.
+   "Class 6 - Morning Shift" and "Class 6 - Day Shift"; each shift is its own class.
+2. Type the student's 17-digit birth registration number in the box in the top bar. There is
+   no login; this number identifies the student and is remembered in the browser.
+3. **শ্রেণি খুঁজুন / Find a class**: every class with its confirmed, held and free seats
+   (refreshed every 5 seconds), searchable and filterable by shift and class. Press **Apply**.
+4. **আমার আবেদন / My applications**: the current application with a countdown, then the
+   history of all applications. **Pay admission fee** opens a review page where the
+   simulated payment confirms the admission; **Cancel application** asks for confirmation on
+   a page of its own. When the time runs out the application switches to EXPIRED by itself
+   and paying is no longer offered (on the payment page the button is disabled).
+
+Class names are read for display: "Class 6 - Morning Shift" appears as "ষষ্ঠ শ্রেণি · প্রভাতী
+শিফট" in Bangla, with the shift's school hours. The UI is in Bangla by default; the link at the
+bottom of the sidebar switches to English. On a phone the sidebar becomes a menu.
 
 <p>
   <img src="docs/screenshots/application.png" alt="Application with countdown" width="62%">
@@ -73,10 +80,10 @@ to `.env` and edit it, or pass values on the command line, for example
 Both suites run in Docker, so nothing else needs to be installed.
 
 ```bash
-# Backend: 28 integration tests against a real PostgreSQL (uses the compose database server)
+# Backend: 29 integration tests against a real PostgreSQL (uses the compose database server)
 docker compose --profile test run --rm --build backend-tests
 
-# Frontend: 43 unit and screen tests
+# Frontend: 53 unit and screen tests
 docker compose --profile test run --rm --build frontend-tests
 ```
 
@@ -134,7 +141,8 @@ Base URL `http://localhost:8080`, JSON in and out. The student is identified by 
 | 8 | `GET /me/holds`               | All applications of this student     | 200     |
 
 Responses contain every field of the contract, plus a few extras (`className`,
-`remainingSeconds`, seat numbers on `POST /classes`).
+`remainingSeconds`, seat numbers on `POST /classes`). One extra endpoint,
+`GET /settings` → `{ "holdDurationSeconds": 600 }`, lets the UI say how long a seat is held.
 
 Errors are RFC 9457 problem documents with a stable machine-readable `code`:
 
@@ -186,9 +194,13 @@ backend/
 frontend/
   Dockerfile, nginx/               static build served by nginx
   src/
+    index.css                      design tokens from the Figma file (colours, fonts)
     api/                           fetch wrapper, endpoint functions, query hooks
-    pages/                         the four screens
-    components/, student/, i18n/, hooks/, lib/
+    pages/                         class search, my applications, payment, cancel, class management
+    classes/, applications/        feature parts: class cards and name parsing; application card, history
+    components/                    buttons, pills, fields, countdown; layout/ holds the sidebar shell
+    student/, i18n/, hooks/, lib/  birth registration number, Bangla/English text, shared clock
+    assets/icons/                  SVG icons exported from the design
 ```
 
 ## Local development without Docker

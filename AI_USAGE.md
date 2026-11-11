@@ -8,7 +8,9 @@ Claude (Anthropic), as a coding agent in the Claude desktop app.
 
 Claude wrote most of the code from the assignment brief: the backend, the frontend, the
 tests, the Docker setup and the first drafts of these documents. I gave it the brief and
-directed the work over two sessions. The commit history shows the order things were built in.
+directed the work over several sessions. The final look comes from a Figma design: Claude
+read it through the Figma connector and rebuilt the screens to match. The commit history shows
+the order things were built in.
 
 ## Where it went wrong, and how that was caught
 
@@ -20,12 +22,13 @@ directed the work over two sessions. The commit history shows the order things w
 | Opening an application while the server was down showed an error, although the data was already cached. | Testing with the backend stopped. | The page now shows the cached copy. |
 | On a plain PostgreSQL server the backend crashed on first start, because the database did not exist. Docker had hidden this. | First run on my machine. | It now creates the database if it is missing. |
 | The "Live" badge kept pulsing while the server was down; a form label sat beside its input; the menu overflowed on phones. | Clicking through the app on desktop and phone size. | All three fixed. |
+| Some copy read wrong after the redesign: "Seat held for 1 minutes", and "সপ্তম শ্রেণি-এ" instead of "সপ্তম শ্রেণিতে". | Reading the new screens in the browser. | Singular forms in English and a proper Bangla suffix. |
 | The frontend image used `node:22-slim`, but some dependencies need Node 22.22 or newer. | Checking each package's required Node version. | Pinned to `node:24-slim`. |
 
 ## What has been checked
 
-On my machine (.NET 10, PostgreSQL 16, Node 24) all 28 backend tests pass against the real
-database, including the concurrency tests, and all 43 frontend tests pass. Every rule in the
+On my machine (.NET 10, PostgreSQL 16, Node 24) all 29 backend tests pass against the real
+database, including the concurrency tests, and all 53 frontend tests pass. Every rule in the
 brief was also checked by hand in the browser and against the API.
 
 ## What has not
