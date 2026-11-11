@@ -3,7 +3,7 @@
 # ---- build: install dependencies and produce the static site -----------------
 # Debian (glibc) rather than Alpine: Vite, Tailwind and the linters ship native
 # binaries, and their glibc builds are the ones exercised most widely.
-FROM node:22-slim AS build
+FROM node:24-slim AS build
 WORKDIR /app
 
 # Copy the manifests first: `npm ci` stays cached until dependencies change.
