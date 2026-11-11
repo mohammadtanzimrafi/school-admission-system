@@ -90,7 +90,7 @@ export function CreateClassPage() {
       <form onSubmit={submit} noValidate className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="space-y-5">
           <div>
-            <label htmlFor={nameId} className="text-sm font-semibold text-stone-800">
+            <label htmlFor={nameId} className="block text-sm font-semibold text-stone-800">
               {t('admin.name')}
             </label>
             <input
@@ -113,7 +113,7 @@ export function CreateClassPage() {
           </div>
 
           <div>
-            <label htmlFor={seatsId} className="text-sm font-semibold text-stone-800">
+            <label htmlFor={seatsId} className="block text-sm font-semibold text-stone-800">
               {t('admin.seats')}
             </label>
             <input

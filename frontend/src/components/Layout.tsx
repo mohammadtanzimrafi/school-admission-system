@@ -16,7 +16,8 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navLink = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold whitespace-nowrap transition-colors',
+      // On a phone the three tabs share the width evenly; from `sm` up they size to their text.
+      'inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-2 text-sm font-semibold whitespace-nowrap transition-colors sm:flex-none sm:px-3',
       isActive ? 'bg-white/15 text-white' : 'text-teal-50 hover:bg-white/10',
     )
 
@@ -48,7 +49,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {t('nav.language')}
           </button>
 
-          <nav className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto px-1 sm:order-2 sm:mx-0 sm:ml-auto sm:w-auto sm:px-0">
+          <nav className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto px-1 [scrollbar-width:none] sm:order-2 sm:mx-0 sm:ml-auto sm:w-auto sm:px-0">
             <NavLink to="/" end className={navLink}>
               {t('nav.classes')}
             </NavLink>
@@ -57,7 +58,9 @@ export function Layout({ children }: { children: ReactNode }) {
             </NavLink>
             <NavLink to="/admin/classes/new" className={navLink}>
               {t('nav.newClass')}
-              <span className="rounded bg-white/20 px-1.5 py-0.5 text-[0.65rem] font-bold tracking-wide uppercase">{t('nav.adminTag')}</span>
+              <span className="hidden rounded bg-white/20 px-1.5 py-0.5 text-[0.65rem] font-bold tracking-wide uppercase sm:inline">
+                {t('nav.adminTag')}
+              </span>
             </NavLink>
           </nav>
         </div>
