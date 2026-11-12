@@ -10,16 +10,19 @@ export function shortHoldId(holdId: string): string {
 }
 
 /**
- * The application "My applications" opens on: the one asked for in the address, else the
- * unpaid one closest to running out, else the most recent.
+ * The application "My applications" opens on when the address names none: the unpaid one
+ * closest to running out, else the most recent (the list arrives newest first).
  */
-export function pickFeaturedHold(holds: Hold[], requestedId: string | undefined, now: number): Hold | undefined {
-  if (requestedId) return holds.find((hold) => hold.holdId === requestedId)
-
+export function pickFeaturedHold(holds: Hold[], now: number): Hold | undefined {
   const pending = holds
     .filter((hold) => effectiveStatus(hold, now) === 'HELD')
     .sort((a, b) => a.deadline - b.deadline)
   return pending[0] ?? holds[0]
+}
+
+/** When each still-unpaid application runs out; the moments a page has to look again. */
+export function pendingDeadlines(holds: readonly Hold[]): number[] {
+  return holds.filter((hold) => hold.status === 'HELD').map((hold) => hold.deadline)
 }
 
 export type HistoryFilter = 'all' | 'confirmed' | 'past'

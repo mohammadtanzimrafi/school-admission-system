@@ -4,7 +4,7 @@ import { effectiveStatus } from '../api/queries'
 import type { Hold, HoldStatus } from '../api/types'
 import { useClassLabel } from '../classes/useClassLabel'
 import { Arrow } from '../components/Button'
-import { formatTimer } from '../components/Countdown'
+import { TimeLeft } from '../components/Countdown'
 import { SectionHeader } from '../components/Feedback'
 import { StatusPill } from '../components/StatusPill'
 import { useI18n } from '../i18n/I18nProvider'
@@ -86,7 +86,15 @@ export function ApplicationHistory({ holds, now, onReapply, reapplyingTo }: Appl
                   </th>
                   <td className="px-5 py-4 text-sm text-muted">{shortHoldId(hold.holdId)}</td>
                   <td className="px-5 py-4"><StatusPill status={status} className="min-w-[106px]" /></td>
-                  <td className="px-5 py-4 text-sm text-muted">{detail(t, status, hold.deadline - now)}</td>
+                  <td className="px-5 py-4 text-sm text-muted">
+                    {status === 'HELD' ? (
+                      <>
+                        {t('history.detail.HELD')} · <TimeLeft deadline={hold.deadline} />
+                      </>
+                    ) : (
+                      t(`history.detail.${status}`)
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <RowAction hold={hold} status={status} onReapply={onReapply} reapplying={reapplyingTo === hold.classId} />
                   </td>
@@ -98,10 +106,6 @@ export function ApplicationHistory({ holds, now, onReapply, reapplyingTo }: Appl
       </div>
     </section>
   )
-}
-
-function detail(t: ReturnType<typeof useI18n>['t'], status: HoldStatus, remainingMs: number): string {
-  return status === 'HELD' ? t('history.detail.HELD', { time: formatTimer(remainingMs) }) : t(`history.detail.${status}`)
 }
 
 const linkClasses = 'inline-flex items-center gap-2 text-[13px] font-semibold whitespace-nowrap text-brand hover:underline disabled:opacity-60'

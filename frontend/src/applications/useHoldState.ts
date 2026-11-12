@@ -1,17 +1,18 @@
 import { useEffect } from 'react'
 import { effectiveStatus, useMyHolds, useRefreshAll } from '../api/queries'
 import type { Hold, HoldStatus } from '../api/types'
-import { useNow } from '../hooks/useNow'
+import { useDeadlineClock } from '../hooks/useDeadlineClock'
 import type { MessageKey } from '../i18n/messages'
 import { useStudent } from '../student/StudentProvider'
+import { pendingDeadlines } from './holdDisplay'
 
 /**
- * A hold as it stands this instant. A HELD hold reads EXPIRED the moment its countdown
- * reaches zero, with no reload, and the server is asked at once so its answer (and the
- * freed seat) follow without waiting for the next poll.
+ * A hold's status as it stands this instant. A HELD hold reads EXPIRED the moment its
+ * countdown reaches zero, with no reload, and the server is asked at once so its answer
+ * (and the freed seat) follow without waiting for the next poll.
  */
-export function useLiveHold(hold: Hold | undefined): { status: HoldStatus | undefined; remainingMs: number; now: number } {
-  const now = useNow(hold?.status === 'HELD')
+export function useHoldStatus(hold: Hold | undefined): HoldStatus | undefined {
+  const now = useDeadlineClock(pendingDeadlines(hold ? [hold] : []))
   const status = hold ? effectiveStatus(hold, now) : undefined
   const lapsed = hold?.status === 'HELD' && status === 'EXPIRED'
   const refreshAll = useRefreshAll()
@@ -20,7 +21,7 @@ export function useLiveHold(hold: Hold | undefined): { status: HoldStatus | unde
     if (lapsed) void refreshAll()
   }, [lapsed, refreshAll])
 
-  return { status, remainingMs: hold ? Math.max(0, hold.deadline - now) : 0, now }
+  return status
 }
 
 /**

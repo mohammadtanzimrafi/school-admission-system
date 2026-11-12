@@ -1,3 +1,5 @@
+import { useNow } from '../hooks/useNow'
+import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
 
 /** "08:42". The design draws timers with Latin digits in both languages. */
@@ -10,8 +12,12 @@ export function formatTimer(milliseconds: number): string {
 
 const URGENT_BELOW_MS = 60_000
 
-/** The large ticking timer. Turns clay-red in the last minute. */
-export function Countdown({ remainingMs, label, className }: { remainingMs: number; label?: string; className?: string }) {
+/**
+ * The large ticking timer, red in the last minute. It reads the shared clock itself, so
+ * only these digits re-render every tick, not the page around them.
+ */
+export function Countdown({ deadline, label, className }: { deadline: number; label?: string; className?: string }) {
+  const remainingMs = Math.max(0, deadline - useNow())
   const urgent = remainingMs < URGENT_BELOW_MS
 
   return (
@@ -27,4 +33,10 @@ export function Countdown({ remainingMs, label, className }: { remainingMs: numb
       </p>
     </div>
   )
+}
+
+/** "08:42 left" inside a line of text, ticking on its own. */
+export function TimeLeft({ deadline }: { deadline: number }) {
+  const { t } = useI18n()
+  return <span className="tabular">{t('history.timeLeft', { time: formatTimer(deadline - useNow()) })}</span>
 }

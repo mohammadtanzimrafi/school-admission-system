@@ -1,35 +1,39 @@
 import { ClipboardList, IdCard } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { AdmissionGuide } from '../applications/AdmissionGuide'
 import { ApplicationCard } from '../applications/ApplicationCard'
 import { ApplicationHistory } from '../applications/ApplicationHistory'
-import { pickFeaturedHold } from '../applications/holdDisplay'
+import { HoldGate } from '../applications/HoldGate'
+import { pendingDeadlines, pickFeaturedHold } from '../applications/holdDisplay'
 import { useApply } from '../applications/useApply'
-import { useHoldOwnership, useLiveHold } from '../applications/useHoldState'
-import { ApiError } from '../api/http'
-import { useHold, useMyHolds } from '../api/queries'
+import { useHoldOwnership, useHoldStatus } from '../applications/useHoldState'
+import { useMyHolds } from '../api/queries'
 import type { Hold, HoldStatus } from '../api/types'
 import { useClassLabel } from '../classes/useClassLabel'
 import { Arrow, Button, buttonClasses } from '../components/Button'
 import { EmptyState, ErrorState, NoticeBar, PageHeader, Skeleton } from '../components/Feedback'
-import { useNow } from '../hooks/useNow'
+import { useDeadlineClock } from '../hooks/useDeadlineClock'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useI18n } from '../i18n/I18nProvider'
 import { useStudent } from '../student/StudentProvider'
 
 /**
- * "My applications": one application in focus (the one in the address, else the unpaid
- * one, else the latest) with its countdown or outcome, then every other application.
+ * "My applications": one application in focus with its countdown or outcome, then every
+ * other application. The address picks the one in focus (/applications/:holdId); without
+ * one it is the unpaid application, else the latest.
  */
 export function MyApplicationsPage() {
   const { holdId } = useParams()
   const { t } = useI18n()
-  const { studentId, askForStudentId } = useStudent()
-  const myHolds = useMyHolds(studentId)
-  const requested = useHold(holdId)
-  const now = useNow((myHolds.data ?? []).some((hold) => hold.status === 'HELD'))
+  useDocumentTitle(t('nav.applications'))
 
-  const header = (
+  return holdId ? <OneApplication holdId={holdId} /> : <AllApplications />
+}
+
+function Header() {
+  const { t } = useI18n()
+
+  return (
     <PageHeader
       crumbs={[t('crumb.admissions'), t('crumb.applications')]}
       title={t('my.title')}
@@ -41,31 +45,41 @@ export function MyApplicationsPage() {
       }
     />
   )
+}
 
-  // Opened from a link: show that application even without (or with another) student number.
-  if (holdId) {
-    if (requested.isPending) return <Loading header={header} />
-    if (requested.data === undefined) {
-      const missing = requested.error instanceof ApiError && requested.error.status === 404
-      return (
-        <>
-          {header}
-          <ErrorState
-            title={missing ? t('my.notFound') : t('my.loadError')}
-            error={requested.error}
-            onRetry={missing ? undefined : () => requested.refetch()}
-            retrying={requested.isFetching}
-          />
-        </>
-      )
-    }
-    return <Overview header={header} featured={requested.data} others={(myHolds.data ?? []).filter((hold) => hold.holdId !== holdId)} now={now} />
-  }
+function OverviewSkeleton() {
+  const { t } = useI18n()
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_382px]" aria-busy="true" aria-label={t('common.loading')}>
+      <Skeleton className="h-[372px]" />
+      <Skeleton className="h-[372px]" />
+    </div>
+  )
+}
+
+/** Opened from a link: shows that application even without (or with another) student number. */
+function OneApplication({ holdId }: { holdId: string }) {
+  const { studentId } = useStudent()
+  const mine = useMyHolds(studentId).data ?? []
+
+  return (
+    <HoldGate holdId={holdId} header={<Header />} skeleton={<OverviewSkeleton />}>
+      {(featured) => <Overview featured={featured} holds={mine} />}
+    </HoldGate>
+  )
+}
+
+function AllApplications() {
+  const { t } = useI18n()
+  const { studentId, askForStudentId } = useStudent()
+  const holds = useMyHolds(studentId)
+  const now = useDeadlineClock(pendingDeadlines(holds.data ?? []))
 
   if (studentId === null) {
     return (
       <>
-        {header}
+        <Header />
         <EmptyState
           icon={<IdCard className="size-7" aria-hidden />}
           title={t('my.needStudent.title')}
@@ -76,21 +90,24 @@ export function MyApplicationsPage() {
     )
   }
 
-  if (myHolds.isPending) return <Loading header={header} />
-  if (myHolds.data === undefined) {
+  if (holds.data === undefined) {
     return (
       <>
-        {header}
-        <ErrorState title={t('my.loadError')} error={myHolds.error} onRetry={() => myHolds.refetch()} retrying={myHolds.isFetching} />
+        <Header />
+        {holds.isPending ? (
+          <OverviewSkeleton />
+        ) : (
+          <ErrorState title={t('my.loadError')} error={holds.error} onRetry={() => holds.refetch()} retrying={holds.isFetching} />
+        )}
       </>
     )
   }
 
-  const featured = pickFeaturedHold(myHolds.data, undefined, now)
+  const featured = pickFeaturedHold(holds.data, now)
   if (!featured) {
     return (
       <>
-        {header}
+        <Header />
         <EmptyState
           icon={<ClipboardList className="size-7" aria-hidden />}
           title={t('my.empty.title')}
@@ -105,7 +122,7 @@ export function MyApplicationsPage() {
     )
   }
 
-  return <Overview header={header} featured={featured} others={myHolds.data.filter((hold) => hold.holdId !== featured.holdId)} now={now} />
+  return <Overview featured={featured} holds={holds.data} />
 }
 
 const noticeTone: Record<HoldStatus, 'amber' | 'green' | 'stone'> = {
@@ -115,19 +132,20 @@ const noticeTone: Record<HoldStatus, 'amber' | 'green' | 'stone'> = {
   EXPIRED: 'amber',
 }
 
-function Overview({ header, featured, others, now }: { header: ReactNode; featured: Hold; others: Hold[]; now: number }) {
+function Overview({ featured, holds }: { featured: Hold; holds: Hold[] }) {
   const { t, locale } = useI18n()
   const classLabel = useClassLabel()
-  const { status = featured.status, remainingMs } = useLiveHold(featured)
+  const status = useHoldStatus(featured) ?? featured.status
   const { ownerId, blocker } = useHoldOwnership(featured.holdId)
   const { apply, applyingTo } = useApply()
 
+  const others = holds.filter((hold) => hold.holdId !== featured.holdId)
+  const now = useDeadlineClock(pendingDeadlines(others))
   const label = classLabel(featured.className ?? featured.classId)
-  const classLine = label.shift ? `${label.title} · ${label.shift}` : label.title
 
   return (
     <>
-      {header}
+      <Header />
 
       <NoticeBar tone={noticeTone[status]} icon={status === 'HELD' ? '◷' : undefined}>
         {status === 'HELD' ? t('my.notice.HELD', { className: inClass(label.title, locale) }) : t(`my.notice.${status}`)}
@@ -137,13 +155,12 @@ function Overview({ header, featured, others, now }: { header: ReactNode; featur
         <ApplicationCard
           hold={featured}
           status={status}
-          remainingMs={remainingMs}
           ownerId={ownerId}
           blocker={blocker ? t(blocker) : undefined}
           onReapply={() => apply(featured.classId)}
           reapplying={applyingTo === featured.classId}
         />
-        <AdmissionGuide status={status} classLine={classLine} />
+        <AdmissionGuide status={status} classLine={label.shift ? `${label.title} · ${label.shift}` : label.title} />
       </div>
 
       <ApplicationHistory holds={others} now={now} onReapply={apply} reapplyingTo={applyingTo} />
@@ -157,18 +174,4 @@ function Overview({ header, featured, others, now }: { header: ReactNode; featur
 function inClass(title: string, locale: string): string {
   if (locale === 'en') return `in ${title}`
   return /[ঀ-৿]$/.test(title) ? `${title}তে` : `${title}-তে`
-}
-
-function Loading({ header }: { header: ReactNode }) {
-  const { t } = useI18n()
-
-  return (
-    <>
-      {header}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_382px]" aria-busy="true" aria-label={t('common.loading')}>
-        <Skeleton className="h-[372px]" />
-        <Skeleton className="h-[372px]" />
-      </div>
-    </>
-  )
 }

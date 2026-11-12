@@ -12,6 +12,7 @@ import { Field } from '../components/Field'
 import { LiveIndicator } from '../components/LiveIndicator'
 import { useToast } from '../components/Toasts'
 import { ACADEMIC_YEAR } from '../config'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
 
@@ -19,6 +20,7 @@ import { cn } from '../lib/cn'
 export function ClassManagementPage() {
   const { t, formatDigits } = useI18n()
   const classes = useClasses()
+  useDocumentTitle(t('nav.management'))
 
   return (
     <>

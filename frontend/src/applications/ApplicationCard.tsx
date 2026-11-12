@@ -15,7 +15,6 @@ interface ApplicationCardProps {
   hold: Hold
   /** The status to show now: a HELD hold past its deadline already reads EXPIRED. */
   status: HoldStatus
-  remainingMs: number
   /** The current student's number, when this application is theirs. */
   ownerId: string | null
   /** Why paying or cancelling is not possible from here, if it is not. */
@@ -40,7 +39,7 @@ function useClassLine(hold: Hold) {
   return { label, details }
 }
 
-function HeldBody({ hold, remainingMs, blocker }: ApplicationCardProps) {
+function HeldBody({ hold, blocker }: ApplicationCardProps) {
   const { t, formatClock } = useI18n()
   const { label, details } = useClassLine(hold)
 
@@ -59,7 +58,7 @@ function HeldBody({ hold, remainingMs, blocker }: ApplicationCardProps) {
           <p className="text-xs font-semibold text-muted">{t('application.timeLeft')}</p>
           <p className="mt-1.5 text-[15px] text-ink">{t('application.heldUntil', { time: formatClock(new Date(hold.deadline)) })}</p>
         </div>
-        <Countdown remainingMs={remainingMs} className="sm:mr-10" />
+        <Countdown deadline={hold.deadline} className="sm:mr-10" />
       </div>
 
       <p className="mt-5 text-[13px] text-muted">{t('application.simulated')}</p>

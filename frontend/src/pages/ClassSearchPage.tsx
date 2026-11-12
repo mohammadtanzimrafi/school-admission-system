@@ -1,6 +1,7 @@
 import { School } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router'
+import { pendingDeadlines } from '../applications/holdDisplay'
 import { useApply } from '../applications/useApply'
 import { effectiveStatus, useClasses, useMyHolds } from '../api/queries'
 import type { Hold } from '../api/types'
@@ -14,7 +15,8 @@ import { EmptyState, ErrorState, PageHeader, SectionHeader, Skeleton } from '../
 import { LiveIndicator } from '../components/LiveIndicator'
 import { Pill } from '../components/StatusPill'
 import { ACADEMIC_YEAR, REFRESH_INTERVAL } from '../config'
-import { useNow } from '../hooks/useNow'
+import { useDeadlineClock } from '../hooks/useDeadlineClock'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useI18n } from '../i18n/I18nProvider'
 import { useStudent } from '../student/StudentProvider'
 
@@ -30,7 +32,9 @@ export function ClassSearchPage() {
   const [query, setQuery] = useState('')
   const [shift, setShift] = useState('')
   const [grade, setGrade] = useState('')
-  const now = useNow((myHolds.data ?? []).some((hold) => hold.status === 'HELD'))
+  // Re-evaluated only when one of the student's holds runs out, not on every tick.
+  const now = useDeadlineClock(pendingDeadlines(myHolds.data ?? []))
+  useDocumentTitle(t('nav.classes'))
 
   // The sidebar's "help" link points at the explainer on this page.
   useEffect(() => {

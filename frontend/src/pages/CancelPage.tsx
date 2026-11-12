@@ -1,54 +1,50 @@
 import { Link, useNavigate, useParams } from 'react-router'
-import { useHoldOwnership, useLiveHold } from '../applications/useHoldState'
-import { ApiError } from '../api/http'
-import { useCancelHold, useHold } from '../api/queries'
+import { HoldGate } from '../applications/HoldGate'
+import { useHoldOwnership, useHoldStatus } from '../applications/useHoldState'
+import { useCancelHold } from '../api/queries'
+import type { Hold } from '../api/types'
 import { useClassLabel } from '../classes/useClassLabel'
 import { Button, buttonClasses } from '../components/Button'
 import { Countdown } from '../components/Countdown'
-import { ErrorState, Lines, PageHeader, Skeleton } from '../components/Feedback'
+import { Lines, PageHeader, Skeleton } from '../components/Feedback'
 import { useToast } from '../components/Toasts'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useI18n } from '../i18n/I18nProvider'
 
 /** "Are you sure?" as a page of its own, with the countdown still running in the corner. */
 export function CancelPage() {
   const { holdId = '' } = useParams()
+  const { t } = useI18n()
+  useDocumentTitle(t('crumb.cancel'))
+
+  const crumbs = [t('crumb.admissions'), t('crumb.cancel')]
+
+  return (
+    <HoldGate
+      holdId={holdId}
+      header={<PageHeader crumbs={crumbs} title={t('cancel.title')} />}
+      skeleton={<Skeleton className="mx-auto h-[498px] max-w-[704px]" />}
+    >
+      {(hold) => <CancelConfirmation hold={hold} crumbs={crumbs} />}
+    </HoldGate>
+  )
+}
+
+function CancelConfirmation({ hold, crumbs }: { hold: Hold; crumbs: string[] }) {
   const { t, describeError } = useI18n()
   const navigate = useNavigate()
   const toast = useToast()
-  const classLabel = useClassLabel()
-  const hold = useHold(holdId)
-  const { status, remainingMs } = useLiveHold(hold.data)
-  const { studentId, blocker } = useHoldOwnership(holdId)
+  const status = useHoldStatus(hold) ?? hold.status
+  const { studentId, blocker } = useHoldOwnership(hold.holdId)
   const cancel = useCancelHold()
-
-  const crumbs = [t('crumb.admissions'), t('crumb.cancel')]
-  const applicationLink = `/applications/${holdId}`
-
-  if (hold.isPending) {
-    return (
-      <>
-        <PageHeader crumbs={crumbs} title={t('cancel.title')} />
-        <Skeleton className="mx-auto h-[498px] max-w-[704px]" />
-      </>
-    )
-  }
-
-  if (hold.data === undefined || status === undefined) {
-    const missing = hold.error instanceof ApiError && hold.error.status === 404
-    return (
-      <>
-        <PageHeader crumbs={crumbs} title={t('cancel.title')} />
-        <ErrorState title={t(missing ? 'my.notFound' : 'my.loadError')} error={hold.error} onRetry={missing ? undefined : () => hold.refetch()} retrying={hold.isFetching} />
-      </>
-    )
-  }
-
+  const className = useClassLabel()(hold.className ?? hold.classId).full
+  const applicationLink = `/applications/${hold.holdId}`
   const held = status === 'HELD'
 
   function confirmCancel() {
     if (studentId === null) return
     cancel.mutate(
-      { holdId, studentId },
+      { holdId: hold.holdId, studentId },
       {
         onSuccess: () => {
           toast.success(t('cancel.done'))
@@ -63,7 +59,7 @@ export function CancelPage() {
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <p className="text-[13px] font-semibold text-muted">{crumbs.join('  /  ')}</p>
-        {held && <Countdown remainingMs={remainingMs} label={t('payment.timeLeft')} className="sm:mr-5" />}
+        {held && <Countdown deadline={hold.deadline} label={t('payment.timeLeft')} className="sm:mr-5" />}
       </div>
 
       <section className="mx-auto mt-6 max-w-[704px] rounded-2xl border border-line bg-white p-6 sm:p-8">
@@ -71,7 +67,7 @@ export function CancelPage() {
           !
         </span>
         <h1 className="mt-7 text-[28px] leading-[1.6] font-semibold text-ink">{t('cancel.title')}</h1>
-        <p className="mt-2 text-lg font-medium text-ink">{classLabel(hold.data.className ?? hold.data.classId).full}</p>
+        <p className="mt-2 text-lg font-medium text-ink">{className}</p>
         <p className="mt-4 text-base leading-[1.6] text-muted">
           <Lines text={held ? t('cancel.body') : t('cancel.closed')} />
         </p>
