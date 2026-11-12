@@ -31,7 +31,7 @@ export function ClassCard({ seats, label, ownHold, applying, busy, onApply }: Cl
         : { text: t('card.status.open'), tone: 'text-brand' }
 
   return (
-    <article className="flex h-full flex-col rounded-xl border border-line bg-white p-[19px]">
+    <article className="flex h-full flex-col rounded-xl border border-line bg-white p-[19px] transition-shadow duration-200 hover:shadow-lg hover:shadow-forest/5">
       <div className="flex items-start gap-3">
         <span
           aria-hidden

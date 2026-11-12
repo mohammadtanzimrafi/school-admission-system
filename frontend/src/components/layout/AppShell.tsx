@@ -1,5 +1,6 @@
 import { Menu, WifiOff, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useServerReachable } from '../../lib/connection'
 import { StudentIdField } from '../../student/StudentIdField'
@@ -10,6 +11,7 @@ import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const [menuOpen, setMenuOpen] = useState(false)
+  useStartPagesAtTheTop()
 
   return (
     <div className="min-h-screen">
@@ -43,12 +45,31 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <ConnectionBanner />
 
-        <main id="main" className="mx-auto w-full max-w-[1204px] px-5 pt-9 pb-14 sm:px-10">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1204px] px-5 pt-9 pb-14 focus:outline-none sm:px-10">
           {children}
         </main>
       </div>
     </div>
   )
+}
+
+/**
+ * A single-page app keeps the scroll position between pages; a guardian who presses "pay"
+ * at the bottom of the history would land halfway down the payment page. Each new page
+ * starts at the top instead, and focus moves to it so screen readers announce the change.
+ * Links to a section (#how-it-works) are left to scroll to that section.
+ */
+function useStartPagesAtTheTop() {
+  const { pathname, hash } = useLocation()
+  const previous = useRef(pathname)
+
+  useEffect(() => {
+    if (previous.current === pathname) return
+    previous.current = pathname
+    if (hash) return
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    document.getElementById('main')?.focus({ preventScroll: true })
+  }, [pathname, hash])
 }
 
 /** The sidebar as a drawer on screens too narrow to keep it open. */
@@ -58,11 +79,17 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     closeButton.current?.focus()
+    // The page behind the drawer should not scroll along with it.
+    const bodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.removeEventListener('keydown', closeOnEscape)
+    }
   }, [onClose])
 
   return (
