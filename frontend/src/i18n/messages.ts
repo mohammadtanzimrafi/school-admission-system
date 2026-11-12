@@ -277,6 +277,14 @@ export const bn = {
 
   'connection.lost': 'সার্ভারের সাথে সংযোগ নেই। সংযোগ ফিরলে তথ্য নিজে থেকেই হালনাগাদ হবে।',
 
+  'assistant.open': 'সহায়তা নিন',
+  'assistant.close': 'সহায়তা বন্ধ করুন',
+  'assistant.title': 'অ্যাডমিটলি সহায়ক',
+  'assistant.subtitle': 'ভর্তির যেকোনো প্রশ্ন করুন',
+  'assistant.placeholder': 'প্রশ্ন লিখুন…',
+  'assistant.send': 'পাঠান',
+  'assistant.typing': 'উত্তর লেখা হচ্ছে',
+
   'common.retry': 'আবার চেষ্টা করুন',
   'common.loading': 'লোড হচ্ছে…',
   'common.close': 'বন্ধ করুন',
@@ -565,6 +573,14 @@ export const en: Record<MessageKey, string> = {
   'error.UNKNOWN': 'Something went wrong. Please try again shortly.',
 
   'connection.lost': 'No connection to the server. The page will update by itself once the connection is back.',
+
+  'assistant.open': 'Get help',
+  'assistant.close': 'Close help',
+  'assistant.title': 'Admitly assistant',
+  'assistant.subtitle': 'Ask anything about admission',
+  'assistant.placeholder': 'Type a question…',
+  'assistant.send': 'Send',
+  'assistant.typing': 'Writing a reply',
 
   'common.retry': 'Try again',
   'common.loading': 'Loading…',

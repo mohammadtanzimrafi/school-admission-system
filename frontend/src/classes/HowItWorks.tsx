@@ -2,7 +2,7 @@ import { useHoldSeconds } from '../api/queries'
 import { Lines } from '../components/Feedback'
 import { useI18n } from '../i18n/I18nProvider'
 
-/** The green banner explaining the three steps. The sidebar's "help" link jumps here. */
+/** The green banner explaining the three steps. */
 export function HowItWorks() {
   const { t, formatHoldLength, formatDigits } = useI18n()
   const holdLength = formatHoldLength(useHoldSeconds())
@@ -10,7 +10,7 @@ export function HowItWorks() {
   const steps = [t('hero.step1'), t('hero.step2', { duration: holdLength }), t('hero.step3')]
 
   return (
-    <section id="how-it-works" className="scroll-mt-28 rounded-[14px] bg-sage-300 px-6 py-5 lg:flex lg:items-stretch lg:gap-8">
+    <section className="rounded-[14px] bg-sage-300 px-6 py-5 lg:flex lg:items-stretch lg:gap-8">
       <div className="flex-1">
         <h2 className="text-[23px] leading-[1.5] font-semibold text-ink">{t('hero.title')}</h2>
         <p className="mt-1.5 text-base text-olive">{t('hero.body')}</p>

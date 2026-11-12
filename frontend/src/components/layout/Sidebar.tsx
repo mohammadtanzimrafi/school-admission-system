@@ -1,4 +1,4 @@
-import { NavLink, Link } from 'react-router'
+import { Link, NavLink } from 'react-router'
 import bookLogo from '../../assets/icons/book-logo.svg'
 import helpIcon from '../../assets/icons/help.svg'
 import bookActive from '../../assets/icons/nav-book-active.svg'
@@ -27,8 +27,15 @@ const NAV: NavItem[] = [
   { to: '/admin/classes', label: 'nav.management', icon: { active: bookActive, inactive: bookInactive } },
 ]
 
+interface SidebarProps {
+  /** Called after any link is followed, so the phone drawer can close. */
+  onNavigate?: () => void
+  /** Opens the help chat. */
+  onHelp: () => void
+}
+
 /** Brand, navigation, the admissions note and the footer. Used fixed on desktop and in the phone drawer. */
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function Sidebar({ onNavigate, onHelp }: SidebarProps) {
   const { t, formatDigits, toggleLocale } = useI18n()
 
   return (
@@ -80,14 +87,14 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
         <div className="mx-2 mt-12 h-px bg-forest-line" />
 
-        <Link
-          to="/#how-it-works"
-          onClick={onNavigate}
+        <button
+          type="button"
+          onClick={onHelp}
           className="mt-5 flex items-center gap-3 rounded-lg px-2.5 py-1 text-[15px] font-medium text-forest-text hover:text-white"
         >
           <img src={helpIcon} width={20} height={20} alt="" />
           {t('nav.help')}
-        </Link>
+        </button>
 
         <div className="mt-9 flex items-center justify-between px-[9px] text-[13px]">
           <span className="text-forest-faint">{t('nav.year', { year: formatDigits(String(ACADEMIC_YEAR)) })}</span>

@@ -1,6 +1,6 @@
 import { School } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { pendingDeadlines } from '../applications/holdDisplay'
 import { useApply } from '../applications/useApply'
 import { effectiveStatus, useClasses, useMyHolds } from '../api/queries'
@@ -27,7 +27,6 @@ export function ClassSearchPage() {
   const myHolds = useMyHolds(studentId)
   const { apply, busy, applyingTo } = useApply()
   const classLabel = useClassLabel()
-  const { hash } = useLocation()
 
   const [query, setQuery] = useState('')
   const [shift, setShift] = useState('')
@@ -36,10 +35,6 @@ export function ClassSearchPage() {
   const now = useDeadlineClock(pendingDeadlines(myHolds.data ?? []))
   useDocumentTitle(t('nav.classes'))
 
-  // The sidebar's "help" link points at the explainer on this page.
-  useEffect(() => {
-    if (hash === '#how-it-works') document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
-  }, [hash])
 
   // The student's seat-occupying application per class, so its card offers "view" instead of "apply".
   const ownByClass = useMemo(() => {

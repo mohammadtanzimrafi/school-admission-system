@@ -1,17 +1,24 @@
 import { Menu, WifiOff, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router'
+import { Assistant } from '../../assistant/Assistant'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useServerReachable } from '../../lib/connection'
 import { StudentIdField } from '../../student/StudentIdField'
 import { Sidebar } from './Sidebar'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 
-/** Sidebar on the left, top bar with the student's number, and the page beneath. */
+/** Sidebar on the left, top bar with the student's number, the page beneath, and the help chat. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   useStartPagesAtTheTop()
+
+  const openHelp = () => {
+    setMenuOpen(false)
+    setHelpOpen(true)
+  }
 
   return (
     <div className="min-h-screen">
@@ -20,9 +27,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[236px] overflow-y-auto bg-forest lg:block">
-        <Sidebar />
+        <Sidebar onHelp={openHelp} />
       </aside>
-      {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
+      {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} onHelp={openHelp} />}
+      <Assistant open={helpOpen} onOpenChange={setHelpOpen} />
 
       <div className="lg:pl-[236px]">
         <header className="sticky top-0 z-20 border-b border-line bg-white">
@@ -73,7 +81,7 @@ function useStartPagesAtTheTop() {
 }
 
 /** The sidebar as a drawer on screens too narrow to keep it open. */
-function MobileMenu({ onClose }: { onClose: () => void }) {
+function MobileMenu({ onClose, onHelp }: { onClose: () => void; onHelp: () => void }) {
   const { t } = useI18n()
   const closeButton = useRef<HTMLButtonElement>(null)
 
@@ -105,7 +113,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         >
           <X className="size-5" aria-hidden />
         </button>
-        <Sidebar onNavigate={onClose} />
+        <Sidebar onNavigate={onClose} onHelp={onHelp} />
       </div>
     </div>
   )
