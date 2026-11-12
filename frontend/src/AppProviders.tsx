@@ -6,7 +6,7 @@ import { I18nProvider } from './i18n/I18nProvider'
 import type { Locale } from './i18n/messages'
 import { StudentProvider } from './student/StudentProvider'
 
-export function createQueryClient(): QueryClient {
+function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {

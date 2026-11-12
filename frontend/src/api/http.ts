@@ -1,9 +1,6 @@
 import { API_BASE_URL } from '../config'
 import { reportServerReachable } from '../lib/connection'
 
-/** Error codes produced on the client, alongside the backend's own `code` values. */
-export type ClientErrorCode = 'NETWORK' | 'TIMEOUT'
-
 /** Any failed API call. `code` is what the UI switches on to pick a friendly message. */
 export class ApiError extends Error {
   readonly status: number

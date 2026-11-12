@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkStudentId, formatStudentId, isValidStudentId, normalizeStudentId } from './studentId'
+import { checkStudentId, isValidStudentId, normalizeStudentId } from './studentId'
 
 describe('normalizeStudentId', () => {
   it('turns Bangla digits into ASCII digits', () => {
@@ -29,11 +29,5 @@ describe('checkStudentId', () => {
   ])('rejects %j as %s', (input, problem) => {
     expect(checkStudentId(input)).toBe(problem)
     expect(isValidStudentId(input)).toBe(false)
-  })
-})
-
-describe('formatStudentId', () => {
-  it('groups the digits for reading', () => {
-    expect(formatStudentId('20152691234567890')).toBe('2015 2691 2345 67890')
   })
 })

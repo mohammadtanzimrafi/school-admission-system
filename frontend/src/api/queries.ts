@@ -7,7 +7,7 @@ import type { CreateClassInput, Hold, HoldStatus } from './types'
 
 const MY_HOLDS = 'my-holds'
 
-export const queryKeys = {
+const queryKeys = {
   classes: ['classes'] as const,
   hold: (holdId: string) => ['holds', holdId] as const,
   myHolds: (studentId: string) => [MY_HOLDS, studentId] as const,

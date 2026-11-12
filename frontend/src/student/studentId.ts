@@ -26,7 +26,3 @@ export function isValidStudentId(value: string | null | undefined): value is str
   return typeof value === 'string' && checkStudentId(value) === null
 }
 
-/** 20152691234567890 -> "2015 2691 2345 67890", easier to read back and compare. */
-export function formatStudentId(studentId: string): string {
-  return studentId.replace(/^(\d{4})(\d{4})(\d{4})(\d+)$/, '$1 $2 $3 $4')
-}

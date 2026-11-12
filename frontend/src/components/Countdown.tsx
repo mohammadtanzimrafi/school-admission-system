@@ -3,7 +3,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { cn } from '../lib/cn'
 
 /** "08:42". The design draws timers with Latin digits in both languages. */
-export function formatTimer(milliseconds: number): string {
+function formatTimer(milliseconds: number): string {
   const total = Math.max(0, Math.ceil(milliseconds / 1000))
   const minutes = String(Math.floor(total / 60)).padStart(2, '0')
   const seconds = String(total % 60).padStart(2, '0')

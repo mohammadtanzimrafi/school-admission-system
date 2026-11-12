@@ -6,7 +6,7 @@
  */
 @theme {
   --font-sans: "Noto Sans Bengali Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Nirmala UI", sans-serif;
-  --font-serif: "Noto Serif Bengali Variable", "Noto Sans Bengali Variable", Georgia, serif;
+  --font-serif: "Noto Serif Bengali", "Noto Sans Bengali Variable", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Surfaces */
