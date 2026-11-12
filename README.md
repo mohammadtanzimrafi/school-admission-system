@@ -83,7 +83,7 @@ Both suites run in Docker, so nothing else needs to be installed.
 # Backend: 29 integration tests against a real PostgreSQL (uses the compose database server)
 docker compose --profile test run --rm --build backend-tests
 
-# Frontend: 53 unit and screen tests
+# Frontend: 58 unit and screen tests
 docker compose --profile test run --rm --build frontend-tests
 ```
 
@@ -176,6 +176,20 @@ Errors are RFC 9457 problem documents with a stable machine-readable `code`:
 
 The SQL is in `backend/src/SchoolAdmission.Api/Data/HoldRepository.cs` and the schema in
 `backend/src/SchoolAdmission.Api/Data/Migrations/V001__initial_schema.sql`.
+
+## Keeping the UI light
+
+- **Countdowns tick on their own.** Only the timer digits read the shared clock several
+  times a second. Pages use `useDeadlineClock`, which re-renders once, at the moment a hold
+  expires, so a page with a running countdown is not redrawn four times a second.
+- **Polling stops when it is pointless.** Class seats refresh every 5 seconds and an open
+  application every 4, but not in a background tab, and an application stops polling once
+  it is no longer HELD. A copy already in the cache is shown at once, also while offline.
+- **Small first load.** The app code is about 28 kB gzipped; libraries sit in a separate
+  `vendor` file that stays cached across releases, and the admin page is loaded only when
+  someone opens it.
+- **Pages feel like pages.** Each one starts at the top, moves focus to its content for
+  screen readers, and names itself in the browser tab.
 
 ## Project layout
 
