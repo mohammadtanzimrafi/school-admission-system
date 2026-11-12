@@ -6,7 +6,7 @@ namespace SchoolAdmission.Api.Data;
 public sealed class ClassRepository(DbDataSource dataSource)
 {
     private const string SelectSeats =
-        "SELECT id, name::text, total_seats, held_seats, confirmed_seats FROM class_seats";
+        "SELECT id, name::text, total_seats, held_seats, confirmed_seats, seconds_to_next_expiry FROM class_seats";
 
     public async Task<ClassSeats> CreateAsync(string name, int totalSeats, CancellationToken ct)
     {
@@ -20,8 +20,8 @@ public sealed class ClassRepository(DbDataSource dataSource)
         return new ClassSeats(id, name, totalSeats, HeldSeats: 0, ConfirmedSeats: 0);
     }
 
-    public Task<List<ClassSeats>> ListAsync(CancellationToken ct) =>
-        dataSource.Sql($"{SelectSeats} ORDER BY created_at, id").QueryAsync(Map, ct);
+    public async Task<IReadOnlyList<ClassSeats>> ListAsync(CancellationToken ct) =>
+        await dataSource.Sql($"{SelectSeats} ORDER BY created_at, id").QueryAsync(Map, ct);
 
     public Task<ClassSeats?> FindAsync(Guid id, CancellationToken ct) =>
         dataSource.Sql($"{SelectSeats} WHERE id = $1", id).QuerySingleOrDefaultAsync(Map, ct);
@@ -31,5 +31,6 @@ public sealed class ClassRepository(DbDataSource dataSource)
         Name: row.GetString(1),
         TotalSeats: row.GetInt32(2),
         HeldSeats: row.GetInt32(3),
-        ConfirmedSeats: row.GetInt32(4));
+        ConfirmedSeats: row.GetInt32(4),
+        NextExpiryIn: row.IsDBNull(5) ? null : TimeSpan.FromSeconds(Math.Max(0, row.GetDouble(5))));
 }

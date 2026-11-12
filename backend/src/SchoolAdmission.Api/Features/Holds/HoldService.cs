@@ -1,12 +1,13 @@
 using SchoolAdmission.Api.Configuration;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Domain;
+using SchoolAdmission.Api.Features.Classes;
 using SchoolAdmission.Api.Http;
 
 namespace SchoolAdmission.Api.Features.Holds;
 
 /// <summary>The application lifecycle: apply (hold a seat), pay (confirm), withdraw (cancel).</summary>
-public sealed class HoldService(HoldRepository holds, AdmissionOptions options)
+public sealed class HoldService(HoldRepository holds, ClassSeatsCache seats, AdmissionOptions options)
 {
     public async Task<Result<Hold>> PlaceAsync(string classId, StudentId student, CancellationToken ct)
     {
@@ -16,6 +17,11 @@ public sealed class HoldService(HoldRepository holds, AdmissionOptions options)
         }
 
         var result = await holds.PlaceAsync(id, student, options.HoldDurationSeconds, ct);
+        if (result.Outcome == PlaceHoldOutcome.Placed)
+        {
+            seats.Invalidate();
+        }
+
         return result.Outcome switch
         {
             PlaceHoldOutcome.Placed => result.Hold!,
@@ -48,7 +54,10 @@ public sealed class HoldService(HoldRepository holds, AdmissionOptions options)
 
         // Attempt first, explain afterwards. The attempt is one atomic statement; the
         // read below only decides which answer to give.
-        await holds.TryConfirmAsync(id, student, ct);
+        if (await holds.TryConfirmAsync(id, student, ct))
+        {
+            seats.Invalidate();
+        }
 
         var owned = await FindOwnedAsync(id, student, ct);
         if (!owned.IsSuccess)
@@ -72,7 +81,10 @@ public sealed class HoldService(HoldRepository holds, AdmissionOptions options)
             return Errors.HoldNotFound;
         }
 
-        await holds.TryCancelAsync(id, student, ct);
+        if (await holds.TryCancelAsync(id, student, ct))
+        {
+            seats.Invalidate();
+        }
 
         var owned = await FindOwnedAsync(id, student, ct);
         if (!owned.IsSuccess)

@@ -4,7 +4,7 @@ using SchoolAdmission.Api.Http;
 
 namespace SchoolAdmission.Api.Features.Classes;
 
-public sealed class ClassService(ClassRepository classes)
+public sealed class ClassService(ClassRepository classes, ClassSeatsCache seats)
 {
     public const int MaxNameLength = 100;
     public const int MaxTotalSeats = 100_000;
@@ -38,10 +38,13 @@ public sealed class ClassService(ClassRepository classes)
             return Errors.Validation(problems);
         }
 
-        return await classes.CreateAsync(name, totalSeats!.Value, ct);
+        var created = await classes.CreateAsync(name, totalSeats!.Value, ct);
+        seats.Invalidate();
+        return created;
     }
 
-    public Task<List<ClassSeats>> ListAsync(CancellationToken ct) => classes.ListAsync(ct);
+    /// <summary>Every class with live seat numbers, shared between requests for a moment (see <see cref="ClassSeatsCache"/>).</summary>
+    public Task<IReadOnlyList<ClassSeats>> ListAsync(CancellationToken ct) => seats.GetAllAsync().WaitAsync(ct);
 
     public async Task<Result<ClassSeats>> GetAsync(string classId, CancellationToken ct)
     {
@@ -50,7 +53,8 @@ public sealed class ClassService(ClassRepository classes)
             return Errors.ClassNotFound;
         }
 
-        var seats = await classes.FindAsync(id, ct);
-        return seats is null ? Errors.ClassNotFound : seats;
+        // A class created by another backend process a moment ago is not in the shared list yet.
+        var found = (await ListAsync(ct)).FirstOrDefault(c => c.Id == id) ?? await classes.FindAsync(id, ct);
+        return found is null ? Errors.ClassNotFound : found;
     }
 }

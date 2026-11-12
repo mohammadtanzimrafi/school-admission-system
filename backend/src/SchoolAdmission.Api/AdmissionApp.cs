@@ -28,6 +28,8 @@ public static class AdmissionApp
         builder.Services.AddSingleton<HoldRepository>();
 
         // Application services.
+        builder.Services.AddSingleton(services => new ClassSeatsCache(
+            services.GetRequiredService<ClassRepository>().ListAsync, TimeProvider.System, ClassSeatsCache.DefaultMaxAge));
         builder.Services.AddSingleton<ClassService>();
         builder.Services.AddSingleton<HoldService>();
         builder.Services.AddHostedService<HoldExpirySweeper>();
