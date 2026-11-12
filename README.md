@@ -55,6 +55,14 @@ Class names are read for display: "Class 6 - Morning Shift" appears as "ষষ�
 শিফট" in Bangla, with the shift's school hours. The UI is in Bangla by default; the link at the
 bottom of the sidebar switches to English. On a phone the sidebar becomes a menu.
 
+**Help chat.** The round button in the corner (or "ভর্তি সহায়তা" in the sidebar) opens an
+assistant that explains every step in Bangla or English, and understands Banglish too
+("seat khali kon class e?"). It answers from the student's own situation (the held seat and
+its time left, confirmed admissions, which classes have free seats, how long a hold lasts) with
+buttons that go to the right page. It is built in, not an AI service: it needs no API key or
+internet, answers instantly, and no question leaves the browser. New topics are a keyword
+list in `assistant/intents.ts` and an answer in `assistant/replies.ts`.
+
 <p>
   <img src="docs/screenshots/application.png" alt="Application with countdown" width="62%">
   <img src="docs/screenshots/my-applications-mobile.png" alt="My applications on a phone" width="27%">
@@ -80,10 +88,10 @@ to `.env` and edit it, or pass values on the command line, for example
 Both suites run in Docker, so nothing else needs to be installed.
 
 ```bash
-# Backend: 29 integration tests against a real PostgreSQL (uses the compose database server)
+# Backend: 34 tests, 29 of them integration tests against a real PostgreSQL (uses the compose database server)
 docker compose --profile test run --rm --build backend-tests
 
-# Frontend: 58 unit and screen tests
+# Frontend: 80 unit and screen tests
 docker compose --profile test run --rm --build frontend-tests
 ```
 
@@ -177,6 +185,18 @@ Errors are RFC 9457 problem documents with a stable machine-readable `code`:
 The SQL is in `backend/src/SchoolAdmission.Api/Data/HoldRepository.cs` and the schema in
 `backend/src/SchoolAdmission.Api/Data/Migrations/V001__initial_schema.sql`.
 
+## Admission-day load
+
+Every open browser asks `GET /classes` every 5 seconds, so thousands of guardians would mean
+thousands of identical queries a second. `ClassSeatsCache` shares one answer between them:
+for at most one second, never past the next hold expiry in it (an expiry frees a seat with no
+write to notice, so the view reports the seconds until the next one, by the database clock),
+and dropped at once when this process creates a class or changes a hold. Requests that arrive
+while the query runs wait for it. Measured locally: **2,000 simultaneous requests, all answered
+in 0.5 s, reached PostgreSQL as 2 queries.** A second backend process sees the other's changes
+within a second. Seat *limits* never read the cache; they are enforced in the database on every
+write, as above.
+
 ## Keeping the UI light
 
 - **Countdowns tick on their own.** Only the timer digits read the shared clock several
@@ -185,9 +205,10 @@ The SQL is in `backend/src/SchoolAdmission.Api/Data/HoldRepository.cs` and the s
 - **Polling stops when it is pointless.** Class seats refresh every 5 seconds and an open
   application every 4, but not in a background tab, and an application stops polling once
   it is no longer HELD. A copy already in the cache is shown at once, also while offline.
-- **Small first load.** The app code is about 28 kB gzipped; libraries sit in a separate
-  `vendor` file that stays cached across releases, and the admin page is loaded only when
-  someone opens it.
+- **Small first load.** The app code is about 29 kB gzipped; libraries sit in a separate
+  `vendor` file that stays cached across releases, and the admin page and the help chat are
+  loaded only when someone opens them. Headlines use a single static weight of Noto Serif
+  Bengali (68 kB) instead of the variable font (187 kB).
 - **Pages feel like pages.** Each one starts at the top, moves focus to its content for
   screen readers, and names itself in the browser tab.
 
@@ -212,6 +233,7 @@ frontend/
     api/                           fetch wrapper, endpoint functions, query hooks
     pages/                         class search, my applications, payment, cancel, class management
     classes/, applications/        feature parts: class cards and name parsing; application card, history
+    assistant/                     the help chat: topics and keywords, answers, chat panel
     components/                    buttons, pills, fields, countdown; layout/ holds the sidebar shell
     student/, i18n/, hooks/, lib/  birth registration number, Bangla/English text, shared clock
     assets/icons/                  SVG icons exported from the design

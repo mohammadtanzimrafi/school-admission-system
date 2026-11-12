@@ -40,6 +40,8 @@ Where the brief was silent, this is what was assumed and why.
 | 17 | CORS allows any origin by default (`CORS_ALLOWED_ORIGINS` narrows it). | The API has no cookies or sessions, and the frontend URL is configurable. |
 | 18 | The UI polls (classes every 3 s, an open application every 4 s) instead of using WebSockets. | "Every few seconds" is the requirement; polling is simpler and survives restarts and proxies. |
 | 19 | The student id is kept in `localStorage`. | Needed so a refresh, or closing and reopening the browser, still shows the running application. |
+| 20 | Seat numbers from `GET /classes` are shared between requests for up to one second. They are never stale after a change made through the same backend process, nor past a hold's expiry; a change made through another process shows within a second. | The UI refreshes every few seconds anyway, and on admission day one shared query instead of thousands keeps the database free for the writes. Seat limits are checked on every write, never against these numbers. |
+| 21 | The help chat is built in (keyword topics and written answers), not an AI service. | The app must run with `docker compose up` alone: no API key, no internet, no per-question cost, and nothing a guardian types leaves the browser. |
 
 ## Bonus: two backend processes, one database
 

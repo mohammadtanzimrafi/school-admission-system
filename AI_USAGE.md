@@ -24,12 +24,14 @@ the order things were built in.
 | The "Live" badge kept pulsing while the server was down; a form label sat beside its input; the menu overflowed on phones. | Clicking through the app on desktop and phone size. | All three fixed. |
 | Some copy read wrong after the redesign: "Seat held for 1 minutes", and "সপ্তম শ্রেণি-এ" instead of "সপ্তম শ্রেণিতে". | Reading the new screens in the browser. | Singular forms in English and a proper Bangla suffix. |
 | Leaving the payment page during the short "verifying payment" step still triggered the jump to the application a moment later. | Code review while restructuring the page. | The delayed jump is cancelled when the page closes. |
+| The help chat wrote "মোট 9টি আবেদন", an English digit inside a Bangla sentence. | Trying the chat in the browser. | Counts are formatted in the reader's digits. |
+| The chat built its opening message from live data during rendering, which reads the clock. | The linter's purity check. | The greeting needs no live data, so it is now a plain function of the language. |
 | The frontend image used `node:22-slim`, but some dependencies need Node 22.22 or newer. | Checking each package's required Node version. | Pinned to `node:24-slim`. |
 
 ## What has been checked
 
-On my machine (.NET 10, PostgreSQL 16, Node 24) all 29 backend tests pass against the real
-database, including the concurrency tests, and all 58 frontend tests pass. Every rule in the
+On my machine (.NET 10, PostgreSQL 16, Node 24) all 34 backend tests pass against the real
+database, including the concurrency tests, and all 80 frontend tests pass. Every rule in the
 brief was also checked by hand in the browser and against the API.
 
 ## What has not
